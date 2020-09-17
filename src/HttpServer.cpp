@@ -221,23 +221,26 @@ void Httpd::init_server()
   socket_timeout_.tv_usec = MSEC_TO_USEC(config_httpd_socket_timeout_ms());
 
 #if defined(CONFIG_IDF_TARGET)
-  // Hook into the Esp32WiFiManager to start/stop the listener automatically
-  // based on the AP/Station interface status.
-  Singleton<Esp32WiFiManager>::instance()->register_network_up_callback(
-  [&](esp_interface_t interface, uint32_t ip)
+  if (Singleton<Esp32WiFiManager>::exists())
   {
-    if (interface == ESP_IF_WIFI_AP)
+    // Hook into the Esp32WiFiManager to start/stop the listener automatically
+    // based on the AP/Station interface status.
+    Singleton<Esp32WiFiManager>::instance()->register_network_up_callback(
+    [&](esp_interface_t interface, uint32_t ip)
     {
-      start_dns_listener(ntohl(ip));
-    }
-    start_http_listener();
-  });
-  Singleton<Esp32WiFiManager>::instance()->register_network_down_callback(
-  [&](esp_interface_t interface)
-  {
-    stop_http_listener();
-    stop_dns_listener();
-  });
+      if (interface == ESP_IF_WIFI_AP)
+      {
+        start_dns_listener(ntohl(ip));
+      }
+      start_http_listener();
+    });
+    Singleton<Esp32WiFiManager>::instance()->register_network_down_callback(
+    [&](esp_interface_t interface)
+    {
+      stop_http_listener();
+      stop_dns_listener();
+    });
+  }
 #endif // CONFIG_IDF_TARGET
 }
 
