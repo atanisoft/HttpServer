@@ -681,14 +681,14 @@ private:
 /// @ref AbstractHttpResponse which will be sent to the client or it can call
 /// @ref HttpRequest::set_status if no response body is required.
 typedef std::function<
-  AbstractHttpResponse *(HttpRequest * /** request*/)> RequestProcessor;
+  http::AbstractHttpResponse *(http::HttpRequest * /** request*/)> RequestProcessor;
 
 
 #define HTTP_HANDLER(name) \
-AbstractHttpResponse * name (HttpRequest *);
+http::AbstractHttpResponse * name (http::HttpRequest *);
 
 #define HTTP_HANDLER_IMPL(name, request) \
-AbstractHttpResponse * name (HttpRequest * request)
+http::AbstractHttpResponse * name (http::HttpRequest * request)
 
 /// URI processing handler which will be invoked for POST/PUT requests that
 /// have a body payload.
@@ -698,29 +698,28 @@ AbstractHttpResponse * name (HttpRequest * request)
 /// client. The function has the same option of calling
 /// @ref HttpRequest::set_status or returning a pointer to a
 /// @ref AbstractHttpResponse.
-typedef std::function<AbstractHttpResponse *(HttpRequest *       /** request */
-                                           , const std::string & /** filename*/
-                                           , size_t              /** size    */
-                                           , const uint8_t *     /** data    */
-                                           , size_t              /** length  */
-                                           , size_t              /** offset  */
-                                           , bool                /** final   */
-                                           , bool *              /** abort   */
-                                           )> StreamProcessor;
+typedef std::function<http::AbstractHttpResponse *(http::HttpRequest * /** request */
+                                                 , const std::string & /** filename*/
+                                                 , size_t              /** size    */
+                                                 , const uint8_t *     /** data    */
+                                                 , size_t              /** length  */
+                                                 , size_t              /** offset  */
+                                                 , bool                /** final   */
+                                                 , bool *              /** abort   */
+                                                 )> StreamProcessor;
 
 #define HTTP_STREAM_HANDLER(name) \
-AbstractHttpResponse * name (HttpRequest *request                           \
-                             , const std::string &filename, size_t size       \
-                             , const uint8_t *data, size_t length             \
-                             , size_t offset, bool final, bool *abort)
+http::AbstractHttpResponse * name (http::HttpRequest *request               \
+                                 , const std::string &filename, size_t size \
+                                 , const uint8_t *data, size_t length       \
+                                 , size_t offset, bool final, bool *abort)
 
 #define HTTP_STREAM_HANDLER_IMPL(name, request, filename, size, data, length  \
                                , offset, final, abort)                        \
-AbstractHttpResponse * name (HttpRequest * request                        \
-                             , const std::string & filename, size_t size  \
-                             , const uint8_t * data, size_t length        \
-                             , size_t offset, bool final, bool * abort)
-
+http::AbstractHttpResponse * name (http::HttpRequest * request                \
+                                 , const std::string & filename, size_t size  \
+                                 , const uint8_t * data, size_t length        \
+                                 , size_t offset, bool final, bool * abort)
 
 /// WebSocket processing Handler.
 ///
@@ -767,7 +766,20 @@ public:
   Httpd(MDNS *mdns = nullptr, uint16_t port = DEFAULT_HTTP_PORT
       , const std::string &name = "httpd"
       , const std::string service_name = "_http._tcp");
-  
+
+  /// Constructor.
+  ///
+  /// @param executor is the @ref Executor to use for all http requests.
+  /// @param mdns is the @ref MDNS instance to use for publishing mDNS records
+  /// when the server is active. This is disabled by default.
+  /// @param port is the port to listen for HTTP requests on, default is 80.
+  /// @param name is the name to use for the executor, default is "httpd".
+  /// @param service_name is the mDNS service name to advertise when the server
+  /// is active, default is _http._tcp.
+  Httpd(ExecutorBase *executor, MDNS *mdns = nullptr
+      , uint16_t port = DEFAULT_HTTP_PORT, const std::string &name = "httpd"
+      , const std::string service_name = "_http._tcp");
+
   /// Destructor.
   ~Httpd();
 
@@ -891,6 +903,9 @@ private:
   /// Gives @ref HttpRequestFlow access to protected/private members.
   friend class HttpRequestFlow;
 
+  /// Initializes the server.
+  void init_server();
+
   /// Schedules the Executable to be cleaned up in an asynchronous fashion.
   void schedule_cleanup(Executable *flow);
 
@@ -966,6 +981,10 @@ private:
 
   /// @ref Executor that manages all @ref StateFlow for the @ref Httpd server.
   Executor<1> executor_;
+
+  /// Internal flag to indicate if this class owns the executor or if it is
+  /// externally managed.
+  bool externalExecutor_{false};
 
   /// TCP/IP port to listen for HTTP requests on.
   uint16_t port_;
