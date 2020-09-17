@@ -41,9 +41,7 @@
 
 #ifdef CONFIG_IDF_TARGET
 
-#if !defined(CONFIG_HTTP_DNS_LIGHT_OPENMRN_LIB)
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
-#endif // !CONFIG_HTTP_DNS_LIGHT_OPENMRN_LIB
 
 #include <esp_system.h>
 
@@ -222,7 +220,7 @@ void Httpd::init_server()
   socket_timeout_.tv_sec = 0;
   socket_timeout_.tv_usec = MSEC_TO_USEC(config_httpd_socket_timeout_ms());
 
-#if defined(CONFIG_IDF_TARGET) && !defined(CONFIG_HTTP_DNS_LIGHT_OPENMRN_LIB)
+#if defined(CONFIG_IDF_TARGET)
   // Hook into the Esp32WiFiManager to start/stop the listener automatically
   // based on the AP/Station interface status.
   Singleton<Esp32WiFiManager>::instance()->register_network_up_callback(
@@ -240,7 +238,7 @@ void Httpd::init_server()
     stop_http_listener();
     stop_dns_listener();
   });
-#endif // CONFIG_IDF_TARGET && !CONFIG_HTTP_DNS_LIGHT_OPENMRN_LIB
+#endif // CONFIG_IDF_TARGET
 }
 
 void Httpd::schedule_cleanup(Executable *flow)
