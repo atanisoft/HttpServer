@@ -26,4 +26,12 @@ idf_component_register(
     INCLUDE_DIRS ${INCLUDE_PATH}
     REQUIRES ${DEPS})
 
-target_compile_options(${COMPONENT_LIB} PRIVATE "-DESP32 -Wno-implicit-fallthrough -Wno-ignored-qualifiers")
+if(CONFIG_HTTP_DNS_LIGHT_OPENMRN_LIB)
+target_compile_options(${COMPONENT_LIB} PRIVATE -DESP32)
+endif()
+
+set_source_files_properties(src/HttpRequest.cpp PROPERTIES COMPILE_FLAGS -Wno-ignored-qualifiers)
+set_source_files_properties(src/HttpRequestWebSocket.cpp PROPERTIES COMPILE_FLAGS "-Wno-implicit-fallthrough -Wno-ignored-qualifiers")
+set_source_files_properties(src/HttpRequestFlow.cpp PROPERTIES COMPILE_FLAGS "-Wno-implicit-fallthrough -Wno-ignored-qualifiers")
+set_source_files_properties(src/HttpResponse.cpp PROPERTIES COMPILE_FLAGS -Wno-ignored-qualifiers)
+set_source_files_properties(src/HttpServer.cpp PROPERTIES COMPILE_FLAGS "-Wno-implicit-fallthrough -Wno-ignored-qualifiers")
