@@ -699,14 +699,13 @@ private:
 /// @ref AbstractHttpResponse which will be sent to the client or it can call
 /// @ref HttpRequest::set_status if no response body is required.
 typedef std::function<
-  AbstractHttpResponse *(HttpRequest * /** request*/)> RequestProcessor;
-
+  http::AbstractHttpResponse *(http::HttpRequest * /** request*/)> RequestProcessor;
 
 #define HTTP_HANDLER(name) \
-AbstractHttpResponse * name (HttpRequest *);
+http::AbstractHttpResponse * name (http::HttpRequest *);
 
 #define HTTP_HANDLER_IMPL(name, request) \
-AbstractHttpResponse * name (HttpRequest * request)
+http::AbstractHttpResponse * name (http::HttpRequest * request)
 
 /// URI processing handler which will be invoked for POST/PUT requests that
 /// have a body payload.
@@ -716,29 +715,29 @@ AbstractHttpResponse * name (HttpRequest * request)
 /// client. The function has the same option of calling
 /// @ref HttpRequest::set_status or returning a pointer to a
 /// @ref AbstractHttpResponse.
-typedef std::function<AbstractHttpResponse *(HttpRequest *       /** request */
-                                           , const std::string & /** filename*/
-                                           , size_t              /** size    */
-                                           , const uint8_t *     /** data    */
-                                           , size_t              /** length  */
-                                           , size_t              /** offset  */
-                                           , bool                /** final   */
-                                           , bool *              /** abort   */
-                                           )> StreamProcessor;
+typedef std::function<
+  http::AbstractHttpResponse *(http::HttpRequest * /** request */
+                             , const std::string & /** filename*/
+                             , size_t              /** size    */
+                             , const uint8_t *     /** data    */
+                             , size_t              /** length  */
+                             , size_t              /** offset  */
+                             , bool                /** final   */
+                             , bool *              /** abort   */
+                             )> StreamProcessor;
 
-#define HTTP_STREAM_HANDLER(name) \
-AbstractHttpResponse * name (HttpRequest *request                           \
+#define HTTP_STREAM_HANDLER(name)                                             \
+http::AbstractHttpResponse * name (http::HttpRequest *request                 \
                              , const std::string &filename, size_t size       \
                              , const uint8_t *data, size_t length             \
                              , size_t offset, bool final, bool *abort)
 
 #define HTTP_STREAM_HANDLER_IMPL(name, request, filename, size, data, length  \
                                , offset, final, abort)                        \
-AbstractHttpResponse * name (HttpRequest * request                        \
-                             , const std::string & filename, size_t size  \
-                             , const uint8_t * data, size_t length        \
-                             , size_t offset, bool final, bool * abort)
-
+http::AbstractHttpResponse * name (http::HttpRequest * request                \
+                                 , const std::string & filename, size_t size  \
+                                 , const uint8_t * data, size_t length        \
+                                 , size_t offset, bool final, bool * abort)
 
 /// WebSocket processing Handler.
 ///
