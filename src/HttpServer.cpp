@@ -156,7 +156,7 @@ void Httpd::websocket_uri(const string &uri, WebSocketHandler handler)
 
 void Httpd::send_websocket_binary(int id, uint8_t *data, size_t len)
 {
-  OSMutexLock l(&websocketsLock_);
+  const std::lock_guard<std::mutex> lock(websocketsLock_);
   if (websockets_.find(id) == websockets_.end())
   {
     LOG_ERROR("[Httpd] Attempt to send data to unknown websocket:%d, "
@@ -168,7 +168,7 @@ void Httpd::send_websocket_binary(int id, uint8_t *data, size_t len)
 
 void Httpd::send_websocket_text(int id, std::string &text)
 {
-  OSMutexLock l(&websocketsLock_);
+  const std::lock_guard<std::mutex> lock(websocketsLock_);
   if (websockets_.find(id) == websockets_.end())
   {
     LOG_ERROR("[Httpd] Attempt to send text to unknown websocket:%d, "
@@ -180,7 +180,7 @@ void Httpd::send_websocket_text(int id, std::string &text)
 
 void Httpd::broadcast_websocket_text(std::string &text)
 {
-  OSMutexLock l(&websocketsLock_);
+  const std::lock_guard<std::mutex> lock(websocketsLock_);
   for (auto &client : websockets_)
   {
     client.second->send_text(text);
@@ -326,7 +326,7 @@ void Httpd::stop_http_listener()
       mdns_unpublish(mdns_service_.c_str());
     }
 #endif
-    OSMutexLock l(&websocketsLock_);
+    const std::lock_guard<std::mutex> lock(websocketsLock_);
     for (auto &client : websockets_)
     {
       client.second->request_close();
@@ -346,7 +346,7 @@ void Httpd::stop_dns_listener()
 
 bool Httpd::add_websocket(int id, WebSocketFlow *ws)
 {
-  OSMutexLock l(&websocketsLock_);
+  const std::lock_guard<std::mutex> lock(websocketsLock_);
   if (websockets_.size() < config_httpd_websocket_max_clients())
   {
     websockets_[id] = ws;
@@ -359,7 +359,7 @@ bool Httpd::add_websocket(int id, WebSocketFlow *ws)
 
 void Httpd::remove_websocket(int id)
 {
-  OSMutexLock l(&websocketsLock_);
+  const std::lock_guard<std::mutex> lock(websocketsLock_);
   websockets_.erase(id);
 }
 

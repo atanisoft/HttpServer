@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <map>
+#include <mutex>
 #include <stdint.h>
 
 #include <executor/Service.hxx>
@@ -1046,7 +1047,7 @@ private:
   std::map<int, WebSocketFlow *> websockets_;
 
   /// Lock object for websockets_.
-  OSMutex websocketsLock_;
+  std::mutex websocketsLock_;
 
   /// Captive portal response for HTTP 204 NO CONTENT.
   std::shared_ptr<AbstractHttpResponse> captive_no_content_;
@@ -1308,7 +1309,7 @@ private:
   uint32_t maskingKey_;
 
   /// Lock for the @ref textToSend_ buffer.
-  OSMutex textLock_;
+  std::mutex textLock_;
 
   /// Buffer of raw text message(s) to send to the client. Multiple messages
   /// can be sent as one frame if they are sent to this client rapidly.

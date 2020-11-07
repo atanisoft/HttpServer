@@ -133,7 +133,7 @@ WebSocketFlow::~WebSocketFlow()
 
 void WebSocketFlow::send_text(string &text)
 {
-  OSMutexLock l(&textLock_);
+  const std::lock_guard<std::mutex> lock(textLock_);
   textToSend_.append(text);
 }
 
@@ -374,7 +374,7 @@ StateFlowBase::Action WebSocketFlow::recv_frame_data()
                                  , STATE(recv_frame_data)
                                  , STATE(shutdown_connection));
   }
-  return yield_and_call(STATE(read_frame_header));
+  return yield_and_call(STATE(send_frame_header));
 }
 
 StateFlowBase::Action WebSocketFlow::shutdown_connection()
@@ -390,7 +390,7 @@ StateFlowBase::Action WebSocketFlow::shutdown_connection()
 StateFlowBase::Action WebSocketFlow::send_frame_header()
 {
   // TODO: add binary message sending support
-  OSMutexLock l(&textLock_);
+  const std::lock_guard<std::mutex> lock(textLock_);
   if (textToSend_.empty())
   {
     return yield_and_call(STATE(read_frame_header));
@@ -440,7 +440,7 @@ StateFlowBase::Action WebSocketFlow::frame_sent()
             , fd_, errno, strerror(errno));
     return yield_and_call(STATE(shutdown_connection));
   }
-  OSMutexLock l(&textLock_);
+  const std::lock_guard<std::mutex> lock(textLock_);
   textToSend_.erase(0, data_size_);
   if (textToSend_.empty())
   {
