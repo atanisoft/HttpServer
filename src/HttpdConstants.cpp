@@ -53,7 +53,7 @@ DEFAULT_CONST(httpd_max_req_size, 4194304);
 DEFAULT_CONST(httpd_max_req_per_connection, 5);
 DEFAULT_CONST(httpd_req_timeout_ms, 5);
 DEFAULT_CONST(httpd_socket_timeout_ms, 50);
-DEFAULT_CONST(httpd_websocket_timeout_ms, 200);
+DEFAULT_CONST(httpd_websocket_timeout_ms, 5);
 DEFAULT_CONST(httpd_websocket_max_frame_size, 256);
 DEFAULT_CONST(httpd_websocket_max_read_attempts, 2);
 DEFAULT_CONST(httpd_websocket_max_uris, 1);
