@@ -267,6 +267,7 @@ static constexpr const char * HTTP_CACHE_CONTROL_MAX_AGE = "max-age";
 static constexpr const char * HTTP_CACHE_CONTROL_PUBLIC = "public";
 static constexpr const char * HTTP_CACHE_CONTROL_PRIVATE = "private";
 static constexpr const char * HTTP_CACHE_CONTROL_MUST_REVALIDATE = "must-revalidate";
+static constexpr const char * HTTP_CACHE_CONTROL_IMMUTABLE = "immutable";
 
 // Values for Connection header
 // TODO: introduce enum constants for these
@@ -474,9 +475,12 @@ public:
   /// @param mime_type is the value to send in the Content-Type HTTP header.
   /// @param encoding is the optional encoding to send in the Content-Encoding
   /// HTTP Header.
+  /// @param cached allows control of the Cache-Control header, when true the
+  /// response will be cached by the client and when false it will not.
   StaticResponse(const uint8_t *payload, const size_t length
                , const std::string mime_type
-               , const std::string encoding = HTTP_ENCODING_NONE);
+               , const std::string encoding = HTTP_ENCODING_NONE
+               , bool cached = true);
 
   /// @return the pre-formatted body of this response.
   const uint8_t *get_body() override
@@ -846,9 +850,12 @@ public:
   /// @param mime_type is the Content-Type parameter to return to the client.
   /// @param encoding is the encoding for the content, if not specified the
   /// Content-Encoding header will not be transmitted.
+  /// @param cached allows control of the Cache-Control header, when true the
+  /// response will be cached by the client and when false it will not.
   void static_uri(const std::string &uri, const uint8_t *content
                 , const size_t length, const std::string &mime_type
-                , const std::string &encoding = HTTP_ENCODING_NONE);
+                , const std::string &encoding = HTTP_ENCODING_NONE
+                , bool cached = true);
 
   /// Registers a WebSocket handler for a given URI.  ///
   /// @param uri is the URI to process as a WebSocket endpoint.

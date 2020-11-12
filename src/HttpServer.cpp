@@ -129,16 +129,19 @@ void Httpd::redirect_uri(const string &source, const string &target)
 
 void Httpd::static_uri(const string &uri, const uint8_t *payload
                      , const size_t length, const string &mime_type
-                     , const string &encoding)
+                     , const string &encoding, bool cached)
 {
   static_uris_.insert(
     std::make_pair(uri
                  , std::make_shared<StaticResponse>(payload, length, mime_type
-                                                  , encoding)));
-  static_cached_.insert(
-    std::make_pair(uri
-                 , std::make_shared<AbstractHttpResponse>(
-                    HttpStatusCode::STATUS_NOT_MODIFIED)));
+                                                  , encoding, cached)));
+  if (cached)
+  {
+    static_cached_.insert(
+      std::make_pair(uri
+                  , std::make_shared<AbstractHttpResponse>(
+                      HttpStatusCode::STATUS_NOT_MODIFIED)));
+  }
 }
 
 void Httpd::websocket_uri(const string &uri, WebSocketHandler handler)
