@@ -133,7 +133,7 @@ WebSocketFlow::~WebSocketFlow()
 
 void WebSocketFlow::send_text(string &text)
 {
-  const std::lock_guard<std::mutex> lock(textLock_);
+  OSMutexLock h(&textLock_);
   textToSend_.append(text);
 }
 
@@ -390,7 +390,7 @@ StateFlowBase::Action WebSocketFlow::shutdown_connection()
 StateFlowBase::Action WebSocketFlow::send_frame_header()
 {
   // TODO: add binary message sending support
-  const std::lock_guard<std::mutex> lock(textLock_);
+  OSMutexLock h(&textLock_);
   if (textToSend_.empty())
   {
     return yield_and_call(STATE(read_frame_header));
@@ -399,7 +399,7 @@ StateFlowBase::Action WebSocketFlow::send_frame_header()
   size_t send_size = 0;
   if (textToSend_.length() < WEBSOCKET_FRAME_LEN_SINGLE)
   {
-    data_[0] = WEBSOCKET_FINAL_FRAME | OP_TEXT;
+    data_[0] = WEBSOCKET_FINAL_FRAME;
     data_[1] = textToSend_.length();
     memcpy(data_ + 2, textToSend_.data(), textToSend_.length());
     data_size_ = textToSend_.length();
@@ -408,7 +408,7 @@ StateFlowBase::Action WebSocketFlow::send_frame_header()
   else if (textToSend_.length() < max_frame_size_ - 4)
   {
     data_size_ = textToSend_.length();
-    data_[0] = WEBSOCKET_FINAL_FRAME | OP_TEXT;
+    data_[0] = WEBSOCKET_FINAL_FRAME;
     data_[1] = WEBSOCKET_FRAME_LEN_UINT16;
     data_[2] = (data_size_ >> 8) & 0xFF;
     data_[3] = data_size_ & 0xFF;
@@ -426,6 +426,7 @@ StateFlowBase::Action WebSocketFlow::send_frame_header()
     memcpy(data_+ 4, textToSend_.data(), data_size_);
     send_size = data_size_ + 4;
   }
+  data_[0] |= OP_TEXT;
   LOG(CONFIG_HTTP_WS_LOG_LEVEL
     , "[WebSocket fd:%d] send:%zu, text:%zu", fd_, send_size
     , textToSend_.length());
@@ -440,7 +441,7 @@ StateFlowBase::Action WebSocketFlow::frame_sent()
             , fd_, errno, strerror(errno));
     return yield_and_call(STATE(shutdown_connection));
   }
-  const std::lock_guard<std::mutex> lock(textLock_);
+  OSMutexLock h(&textLock_);
   textToSend_.erase(0, data_size_);
   if (textToSend_.empty())
   {

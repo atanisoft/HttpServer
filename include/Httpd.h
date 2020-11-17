@@ -1316,7 +1316,7 @@ private:
   uint32_t maskingKey_;
 
   /// Lock for the @ref textToSend_ buffer.
-  std::mutex textLock_;
+  OSMutex textLock_;
 
   /// Buffer of raw text message(s) to send to the client. Multiple messages
   /// can be sent as one frame if they are sent to this client rapidly.
