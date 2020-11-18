@@ -100,7 +100,12 @@ WebSocketFlow::WebSocketFlow(Httpd *server, int fd, uint32_t remote_ip
       data_ = (uint8_t *)malloc(max_frame_size_);
       if (data_)
       {
+        // pre-allocate for three max sized frames.
+        textToSend_.reserve(max_frame_size_ * 3);
+
+        // prepare to send the handshake to the WS client
         start_flow(STATE(send_handshake));
+
         return;
       }
     }

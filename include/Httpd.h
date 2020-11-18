@@ -761,18 +761,19 @@ http::AbstractHttpResponse * name (http::HttpRequest * request                \
 /// additional details about the WebSocket client, queue response text or
 /// binary data for delivery at next available opportunity, or request the
 /// WebSocket connection to be closed.
-typedef std::function<void(WebSocketFlow *  /* websocket */
-                         , WebSocketEvent   /* event */
-                         , uint8_t *        /* data */
-                         , size_t           /* data length */
-                         )> WebSocketHandler;
+typedef std::function<void(http::WebSocketFlow *  /* websocket */
+                         , http::WebSocketEvent   /* event */
+                         , uint8_t *              /* data */
+                         , size_t                 /* data length */
+                         )> http::WebSocketHandler;
 
-#define WEBSOCKET_STREAM_HANDLER(name) \
-void name (WebSocketFlow *, WebSocketEvent, const uint8_t *, size_t);
+#define WEBSOCKET_STREAM_HANDLER(name)                                      \
+void name (http::WebSocketFlow *, http::WebSocketEvent, const uint8_t *     \
+         , size_t);
 
 #define WEBSOCKET_STREAM_HANDLER_IMPL(name, websocket, event, data, length) \
-void name (WebSocketFlow * websocket, WebSocketEvent event \
-           , const uint8_t * data, size_t length)
+void name (http::WebSocketFlow * websocket, http::WebSocketEvent event      \
+         , const uint8_t * data, size_t length)
 
 /// HTTP Server implementation
 class Httpd : public Service, public Singleton<Httpd>
