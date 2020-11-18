@@ -765,7 +765,7 @@ typedef std::function<void(http::WebSocketFlow *  /* websocket */
                          , http::WebSocketEvent   /* event */
                          , uint8_t *              /* data */
                          , size_t                 /* data length */
-                         )> http::WebSocketHandler;
+                         )> WebSocketHandler;
 
 #define WEBSOCKET_STREAM_HANDLER(name)                                      \
 void name (http::WebSocketFlow *, http::WebSocketEvent, const uint8_t *     \
