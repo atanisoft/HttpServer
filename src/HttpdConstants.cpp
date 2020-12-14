@@ -58,6 +58,7 @@ DEFAULT_CONST(httpd_websocket_max_frame_size, 512);
 DEFAULT_CONST(httpd_websocket_max_read_attempts, 2);
 DEFAULT_CONST(httpd_websocket_max_uris, 1);
 DEFAULT_CONST(httpd_websocket_max_clients, 10);
+DEFAULT_CONST(httpd_websocket_max_pending_frames, 20);
 DEFAULT_CONST(httpd_cache_max_age_sec, 300);
 
 ///////////////////////////////////////////////////////////////////////////////

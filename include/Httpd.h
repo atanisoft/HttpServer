@@ -131,6 +131,11 @@ DECLARE_CONST(httpd_websocket_max_uris);
 /// Default is 10.
 DECLARE_CONST(httpd_websocket_max_clients);
 
+/// This controls how many pending text frames will be cached before discarding
+/// additional frames.
+/// Default is 20.
+DECLARE_CONST(httpd_websocket_max_pending_frames);
+
 /// This controls the Cache-Control: max-age=XXX value in the response headers
 /// for static content.
 DECLARE_CONST(httpd_cache_max_age_sec);
@@ -1316,12 +1321,11 @@ private:
   /// 32bit XOR mask to apply to the data when @ref masked_ is true.
   uint32_t maskingKey_;
 
-  /// Lock for the @ref textToSend_ buffer.
+  /// Lock for the @ref textFrames_.
   OSMutex textLock_;
 
-  /// Buffer of raw text message(s) to send to the client. Multiple messages
-  /// can be sent as one frame if they are sent to this client rapidly.
-  std::string textToSend_;
+  /// Text frames that are pending delivery.
+  std::vector<std::string> textFrames_;
 
   /// When set to true the @ref WebSocketFlow will attempt to shutdown the
   /// WebSocket connection at it's next opportunity.
