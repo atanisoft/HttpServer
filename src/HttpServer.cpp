@@ -261,16 +261,16 @@ void Httpd::init_server()
     // Hook into the Esp32WiFiManager to start/stop the listener automatically
     // based on the AP/Station interface status.
     Singleton<Esp32WiFiManager>::instance()->register_network_up_callback(
-    [&](esp_interface_t interface, uint32_t ip)
+    [&](esp_network_interface_t interface, uint32_t ip)
     {
-      if (interface == ESP_IF_WIFI_AP)
+      if (interface == esp_network_interface_t::SOFTAP_INTERFACE)
       {
         start_dns_listener(ntohl(ip));
       }
       start_http_listener();
     });
     Singleton<Esp32WiFiManager>::instance()->register_network_down_callback(
-    [&](esp_interface_t interface)
+    [&](esp_network_interface_t interface)
     {
       stop_http_listener();
       stop_dns_listener();
