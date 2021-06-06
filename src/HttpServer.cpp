@@ -89,6 +89,39 @@ Httpd::Httpd(ExecutorBase *executor, MDNS *mdns, uint16_t port
   init_server();
 }
 
+#ifdef CONFIG_IDF_TARGET
+Httpd::Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns,
+             uint16_t port, const string &name, const string service_name)
+  : Service(&executor_)
+  , name_(name)
+  , mdns_(mdns)
+  , mdns_service_(service_name)
+  , executor_(name.c_str(), config_httpd_server_priority()
+            , config_httpd_server_stack_size())
+  , port_(port)
+{
+  init_server();
+
+  // Hook into the Esp32WiFiManager to start/stop the listener automatically
+  // based on the AP/Station interface status.
+  wifi->register_network_up_callback(
+    [&](esp_network_interface_t interface, uint32_t ip)
+    {
+      if (interface == esp_network_interface_t::SOFTAP_INTERFACE)
+      {
+        start_dns_listener(ntohl(ip));
+      }
+      start_http_listener();
+    });
+  wifi->register_network_down_callback(
+    [&](esp_network_interface_t interface)
+    {
+      stop_http_listener();
+      stop_dns_listener();
+    });
+}
+#endif // CONFIG_IDF_TARGET
+
 Httpd::~Httpd()
 {
   stop_http_listener();
@@ -254,29 +287,6 @@ void Httpd::init_server()
   // pre-initialize the timeout parameters for all sockets that are accepted
   socket_timeout_.tv_sec = 0;
   socket_timeout_.tv_usec = MSEC_TO_USEC(config_httpd_socket_timeout_ms());
-
-#if defined(CONFIG_IDF_TARGET)
-  if (Singleton<Esp32WiFiManager>::exists())
-  {
-    // Hook into the Esp32WiFiManager to start/stop the listener automatically
-    // based on the AP/Station interface status.
-    Singleton<Esp32WiFiManager>::instance()->register_network_up_callback(
-    [&](esp_network_interface_t interface, uint32_t ip)
-    {
-      if (interface == esp_network_interface_t::SOFTAP_INTERFACE)
-      {
-        start_dns_listener(ntohl(ip));
-      }
-      start_http_listener();
-    });
-    Singleton<Esp32WiFiManager>::instance()->register_network_down_callback(
-    [&](esp_network_interface_t interface)
-    {
-      stop_http_listener();
-      stop_dns_listener();
-    });
-  }
-#endif // CONFIG_IDF_TARGET
 }
 
 void Httpd::schedule_cleanup(Executable *flow)

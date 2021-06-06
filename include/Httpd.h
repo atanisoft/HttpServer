@@ -57,6 +57,13 @@
 
 #include "Dnsd.h"
 
+#ifdef CONFIG_IDF_TARGET
+namespace openmrn_arduino
+{
+  class Esp32WiFiManager;
+}
+#endif
+
 /// Namespace for HTTP related functionality.
 namespace http
 {
@@ -808,6 +815,21 @@ public:
   Httpd(ExecutorBase *executor, MDNS *mdns = nullptr
       , uint16_t port = DEFAULT_HTTP_PORT, const std::string &name = "httpd"
       , const std::string service_name = "_http._tcp");
+
+#ifdef CONFIG_IDF_TARGET
+  /// Constructor.
+  ///
+  /// @param wifi is the @ref Esp32WiFiManager that manages the WiFi system.
+  /// @param mdns is the @ref MDNS instance to use for publishing mDNS records
+  /// when the server is active. This is disabled by default.
+  /// @param port is the port to listen for HTTP requests on, default is 80.
+  /// @param name is the name to use for the executor, default is "httpd".
+  /// @param service_name is the mDNS service name to advertise when the server
+  /// is active, default is _http._tcp.
+  Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns = nullptr,
+        uint16_t port = DEFAULT_HTTP_PORT, const std::string &name = "httpd",
+        const std::string service_name = "_http._tcp");
+#endif // CONFIG_IDF_TARGET
 
   /// Destructor.
   ~Httpd();
