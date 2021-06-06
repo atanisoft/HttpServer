@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <map>
 #include <mutex>
+#include <netinet/in.h>
 #include <stdint.h>
 
 #include <executor/Service.hxx>
@@ -949,6 +950,22 @@ public:
   void captive_portal(std::string first_access_response
                     , std::string auth_uri = "/captiveauth"
                     , uint64_t auth_timeout = UINT32_MAX);
+
+  /// Starts the HTTP and DNS listeners.
+  ///
+  /// @param dns_ip_address IP address to respond with to all DNS queries,
+  /// default value is INADDR_ANY (disabled). Ths will only be used if there
+  /// is a configured captive portal.
+  ///
+  /// NOTE: On the ESP32 when passing in an Esp32WiFiManager instance it is not
+  /// necessary to call this method.
+  void start_server(in_addr_t dns_ip_address = INADDR_ANY);
+
+  /// Stops the HTTP and DNS listeners.
+  ///
+  /// NOTE: On the ESP32 when passing in an Esp32WiFiManager instance it is not
+  /// necessary to call this method.
+  void stop_server();
 
 private:
   /// Gives @ref WebSocketFlow access to protected/private members.

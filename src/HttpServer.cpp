@@ -116,8 +116,7 @@ Httpd::Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns,
   wifi->register_network_down_callback(
     [&](esp_network_interface_t interface)
     {
-      stop_http_listener();
-      stop_dns_listener();
+      stop_server();
     });
 }
 #endif // CONFIG_IDF_TARGET
@@ -280,6 +279,21 @@ void Httpd::captive_portal(string first_access_response
   captive_auth_uri_.assign(std::move(auth_uri));
   captive_timeout_ = auth_timeout;
   captive_active_ = true;
+}
+
+void Httpd::start_server(in_addr_t dns_ip_address)
+{
+  if (dns_ip_address != INADDR_ANY && captive_active_)
+  {
+    start_dns_listener(ntohl(dns_ip_address));
+  }
+  start_http_listener();
+}
+
+void Httpd::stop_server()
+{
+  stop_http_listener();
+  stop_dns_listener();
 }
 
 void Httpd::init_server()
