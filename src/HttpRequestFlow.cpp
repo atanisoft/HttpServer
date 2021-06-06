@@ -1,5 +1,5 @@
 /** \copyright
- * Copyright (c) 2019-2020, Mike Dunston
+ * Copyright (c) 2019-2021, Mike Dunston
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
