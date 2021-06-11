@@ -39,6 +39,7 @@
 
 #include <string>
 #include <vector>
+#include <utils/StringPrintf.hxx>
 
 namespace http
 {
