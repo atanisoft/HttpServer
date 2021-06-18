@@ -90,16 +90,31 @@ Httpd::Httpd(ExecutorBase *executor, MDNS *mdns, uint16_t port
 }
 
 #ifdef CONFIG_IDF_TARGET
+
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
+static constexpr BaseType_t HTTP_CPU_NUM = APP_CPU_NUM;
+#else
+static constexpr BaseType_t HTTP_CPU_NUM = PRO_CPU_NUM;
+#endif
+
+static void http_executor_task(void *param)
+{
+  Executor<1> *exec = (Executor<1> *)param;
+  exec->thread_body();
+}
+
 Httpd::Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns,
              uint16_t port, const string &name, const string service_name)
   : Service(&executor_)
   , name_(name)
   , mdns_(mdns)
   , mdns_service_(service_name)
-  , executor_(name.c_str(), config_httpd_server_priority()
-            , config_httpd_server_stack_size())
+  , executor_(NO_THREAD())
   , port_(port)
 {
+  xTaskCreatePinnedToCore(http_executor_task, name.c_str(),
+                          config_httpd_server_stack_size(), &executor_,
+                          config_httpd_server_priority(), NULL, HTTP_CPU_NUM);
   init_server();
 
   // Hook into the Esp32WiFiManager to start/stop the listener automatically
