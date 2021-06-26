@@ -42,11 +42,7 @@ namespace http
 ///////////////////////////////////////////////////////////////////////////////
 
 DEFAULT_CONST(httpd_server_stack_size, 6144);
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
-DEFAULT_CONST(httpd_server_priority, 5);
-#else
 DEFAULT_CONST(httpd_server_priority, 0);
-#endif // CONFIG_IDF_TARGET
 DEFAULT_CONST(httpd_header_chunk_size, 512);
 DEFAULT_CONST(httpd_body_chunk_size, 3072);
 DEFAULT_CONST(httpd_response_chunk_size, 2048);
