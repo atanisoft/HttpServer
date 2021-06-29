@@ -298,19 +298,31 @@ StateFlowBase::Action WebSocketFlow::frame_data_len_received()
 {
   if (frameLenType_ == 1)
   {
+    LOG(CONFIG_HTTP_WS_LOG_LEVEL, "[WebSocket fd:%d] orig len: %d", fd_,
+        (int)frameLength16_);
     // byte swap frameLength16_ into frameLength_
-    frameLength_ = (frameLength16_ << 8) | (frameLength16_ >> 8);
+    frameLength_ = ((frameLength16_ & 0xFF) << 8) +
+                   ((frameLength16_ >> 8) & 0xFF);
   }
   else if (frameLenType_ == 2)
   {
+  LOG(CONFIG_HTTP_WS_LOG_LEVEL, "[WebSocket fd:%d] orig len: %" PRIu64, fd_,
+      frameLength_);
     // byte swap frameLength_ (64 bit)
     uint8_t *p = (uint8_t *)frameLength_;
-    uint64_t temp =            p[7]        | (uint16_t)(p[6]) << 8
-                  | (uint32_t)(p[5]) << 16 | (uint32_t)(p[4]) << 24
-                  | (uint64_t)(p[3]) << 32 | (uint64_t)(p[2]) << 40
-                  | (uint64_t)(p[1]) << 48 | (uint64_t)(p[0]) << 56;
+    uint64_t temp =             p[7] +
+                    ((uint16_t)(p[6] << 8))  +
+                    ((uint32_t)(p[5] << 16)) +
+                    ((uint32_t)(p[4] << 24)) +
+                    ((uint64_t)(p[3] << 32)) +
+                    ((uint64_t)(p[2] << 40)) +
+                    ((uint64_t)(p[1] << 48)) +
+                    ((uint64_t)(p[0] << 56));
     frameLength_ = temp;
   }
+
+  LOG(CONFIG_HTTP_WS_LOG_LEVEL, "[WebSocket fd:%d] frame len: %" PRIu64, fd_,
+      frameLength_);
 
   if (masked_)
   {
