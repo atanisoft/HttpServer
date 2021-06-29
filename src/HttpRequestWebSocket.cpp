@@ -310,14 +310,14 @@ StateFlowBase::Action WebSocketFlow::frame_data_len_received()
       frameLength_);
     // byte swap frameLength_ (64 bit)
     uint8_t *p = (uint8_t *)frameLength_;
-    uint64_t temp =             p[7] +
-                    ((uint16_t)(p[6] << 8))  +
-                    ((uint32_t)(p[5] << 16)) +
-                    ((uint32_t)(p[4] << 24)) +
-                    ((uint64_t)(p[3] << 32)) +
-                    ((uint64_t)(p[2] << 40)) +
-                    ((uint64_t)(p[1] << 48)) +
-                    ((uint64_t)(p[0] << 56));
+    uint64_t temp =              p[7] +
+                    (((uint16_t)(p[6]) << 8))  +
+                    (((uint32_t)(p[5]) << 16)) +
+                    (((uint32_t)(p[4]) << 24)) +
+                    (((uint64_t)(p[3]) << 32)) +
+                    (((uint64_t)(p[2]) << 40)) +
+                    (((uint64_t)(p[1]) << 48)) +
+                    (((uint64_t)(p[0]) << 56));
     frameLength_ = temp;
   }
 
