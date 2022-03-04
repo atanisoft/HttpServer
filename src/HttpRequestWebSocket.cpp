@@ -34,10 +34,8 @@
 #include "Httpd.h"
 
 #if defined(CONFIG_IDF_TARGET)
-// ESP-IDF includes mbedTLS and optional accelerated SHA1.
 #include <mbedtls/sha1.h>
-#define HTTP_USE_MBEDTLS_SHA1 1
-#endif // ESP32 || ESP_IDF_VERSION_MAJOR
+#endif // CONFIG_IDF_TARGET
 
 namespace http
 {
@@ -82,11 +80,16 @@ WebSocketFlow::WebSocketFlow(Httpd *server, int fd, uint32_t remote_ip
     unsigned char key_sha1[20];
     LOG(CONFIG_HTTP_WS_LOG_LEVEL
       , "[WebSocket fd:%d] Connected, starting handshake", fd_);
-#ifdef HTTP_USE_MBEDTLS_SHA1
+#if defined(CONFIG_IDF_TARGET)
     // SHA1 encode the ws_key plus the websocket UUID, if this fails close the
     // socket immediately.
-    if (!mbedtls_sha1_ret((unsigned char *)key_data.c_str(), key_data.length()
-                        , key_sha1))
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
+    if (!mbedtls_sha1_ret((unsigned char *)key_data.c_str(),
+                          key_data.length(), key_sha1))
+#else // IDF v5.0+
+    if (!mbedtls_sha1((unsigned char *)key_data.c_str(),
+                      key_data.length(), key_sha1))
+#endif // IDF < v5.0
     {
       AbstractHttpResponse resp(STATUS_SWITCH_PROTOCOL);
       resp.header(HttpHeader::CONNECTION, HTTP_CONNECTION_UPGRADE);
@@ -107,9 +110,9 @@ WebSocketFlow::WebSocketFlow(Httpd *server, int fd, uint32_t remote_ip
       }
     }
     LOG_ERROR("[WebSocket fd:%d] Error estabilishing connection, aborting", fd_);
-#else
+#else // NOT CONFIG_IDF_TARGET
     LOG_ERROR("[WebSocket fd:%d] No SHA1 library available, aborting", fd_);
-#endif // HTTP_USE_MBEDTLS_SHA1
+#endif // CONFIG_IDF_TARGET
   }
   else
   {
