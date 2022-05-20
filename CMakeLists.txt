@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 file(GLOB SOURCES src/*.cpp)
 set(INCLUDE_PATH include)
-set(DEPS lwip mbedtls OpenMRNIDF)
+set(DEPS esp_timer lwip mbedtls OpenMRNIDF)
 
 idf_component_register(
     SRCS ${SOURCES}
