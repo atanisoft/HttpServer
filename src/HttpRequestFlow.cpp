@@ -34,9 +34,7 @@
 #include "Httpd.h"
 #include "HttpStringUtils.h"
 
-#if CONFIG_HTTP_REQ_FLOW_LOG_LEVEL == VERBOSE
 #include <esp_timer.h>
-#endif // CONFIG_HTTP_REQ_FLOW_LOG_LEVEL == VERBOSE
 
 namespace http
 {
