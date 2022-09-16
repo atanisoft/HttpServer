@@ -91,7 +91,9 @@ StateFlowBase::Action HttpRequestFlow::start_request()
   part_type_.clear();
   part_type_.shrink_to_fit();
   raw_header_.clear();
+#if CONFIG_HTTP_REQ_FLOW_LOG_LEVEL == VERBOSE
   start_time_ = os_get_time_monotonic();
+#endif
   buf_.resize(header_read_size_);
   return read_repeated_with_timeout(&helper_, timeout_, fd_, buf_.data()
                                   , header_read_size_
