@@ -56,8 +56,8 @@ using std::make_pair;
 /// @param delim is the delimeter to break the string on.
 ///
 /// @return the pair of string objects.
-static inline pair<string, string> break_string(string &str
-                                              , const string& delim)
+static inline pair<string, string> break_string(string &str,
+                                                const string& delim)
 {
   size_t pos = str.find_first_of(delim);
   if (pos == string::npos)
@@ -83,10 +83,10 @@ static inline pair<string, string> break_string(string &str
 /// this is false the last token will not be inserted to the container.
 /// @param discard_empty will discard empty tokens when set to true.
 template <class ContainerT>
-string::size_type tokenize(const string& str, ContainerT& tokens
-                         , const string& delimeter = " "
-                         , bool keep_incomplete = true
-                         , bool discard_empty = false)
+string::size_type tokenize(const string& str, ContainerT& tokens,
+                           const string& delimeter = " ",
+                           bool keep_incomplete = true,
+                           bool discard_empty = false)
 {
   string::size_type pos, lastPos = 0;
 
@@ -107,8 +107,8 @@ string::size_type tokenize(const string& str, ContainerT& tokens
 
     if (pos != lastPos || !discard_empty)
     {
-      tokens.emplace_back(value_type(str.data() + lastPos
-                                  , (size_type)pos - lastPos));
+      tokens.emplace_back(value_type(str.data() + lastPos,
+                                    (size_type)pos - lastPos));
     }
     lastPos = pos + delimeter.length();
   }
@@ -120,8 +120,8 @@ string::size_type tokenize(const string& str, ContainerT& tokens
 /// @param strings is the vector<string> to join
 /// @param delimeter is the string to join the segments with.
 /// @return the joined string.
-static inline string string_join(const vector<string>& strings
-                               , const string& delimeter = "")
+static inline string string_join(const vector<string>& strings,
+                                 const string& delimeter = "")
 {
   string result;
   for (auto piece : strings)
@@ -141,9 +141,9 @@ static inline string string_join(const vector<string>& strings
 /// @param last is the starting iterator position.
 /// @param delimeter is the string to join the segments with.
 /// @return the joined string.
-static inline string string_join(const vector<string>::iterator first
-                               , const vector<string>::iterator last
-                               , const string& delimeter = "")
+static inline string string_join(const vector<string>::iterator first,
+                                 const vector<string>::iterator last,
+                                 const string& delimeter = "")
 {
   vector<string> vec(first, last);
   return string_join(vec, delimeter);

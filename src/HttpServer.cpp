@@ -39,6 +39,10 @@
 #include <sys/fcntl.h>
 #include <sys/socket.h>
 
+#ifndef CONFIG_HTTP_SERVER_LOG_LEVEL
+#define CONFIG_HTTP_SERVER_LOG_LEVEL VERBOSE
+#endif
+
 #ifdef CONFIG_IDF_TARGET
 
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
@@ -63,28 +67,20 @@ static void incoming_http_connection(int fd)
   Singleton<Httpd>::instance()->new_connection(fd);
 }
 
-Httpd::Httpd(MDNS *mdns, uint16_t port, const string &name
-           , const string service_name)
-  : Service(&executor_)
-  , name_(name)
-  , mdns_(mdns)
-  , mdns_service_(service_name)
-  , executor_(name.c_str(), config_httpd_server_priority()
-            , config_httpd_server_stack_size())
-  , port_(port)
+Httpd::Httpd(MDNS *mdns, uint16_t port, const string &name,
+             const string service_name): Service(&executor_), name_(name),
+             mdns_(mdns), mdns_service_(service_name),
+             executor_(name.c_str(), config_httpd_server_priority(),
+                       config_httpd_server_stack_size()),
+             port_(port)
 {
   init_server();
 }
 
-Httpd::Httpd(ExecutorBase *executor, MDNS *mdns, uint16_t port
-           , const string &name, const string service_name)
-  : Service(executor)
-  , name_(name)
-  , mdns_(mdns)
-  , mdns_service_(service_name)
-  , executor_(NO_THREAD()) // unused
-  , externalExecutor_(true)
-  , port_(port)
+Httpd::Httpd(ExecutorBase *executor, MDNS *mdns, uint16_t port,
+             const string &name, const string service_name): Service(executor),
+             name_(name), mdns_(mdns), mdns_service_(service_name),
+             executor_(NO_THREAD()), externalExecutor_(true), port_(port)
 {
   init_server();
 }
@@ -93,13 +89,9 @@ Httpd::Httpd(ExecutorBase *executor, MDNS *mdns, uint16_t port
 
 Httpd::Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns,
              uint16_t port, const string &name, const string service_name)
-  : Service(wifi->executor())
-  , name_(name)
-  , mdns_(mdns)
-  , mdns_service_(service_name)
-  , executor_(NO_THREAD())
-  , externalExecutor_(true)
-  , port_(port)
+  : Service(wifi->executor()), name_(name), mdns_(mdns),
+  mdns_service_(service_name), executor_(NO_THREAD()), externalExecutor_(true),
+  port_(port)
 {
   init_server();
 
@@ -137,8 +129,8 @@ Httpd::~Httpd()
   websockets_.clear();
 }
 
-void Httpd::uri(const std::string &uri, const size_t method_mask
-              , RequestProcessor handler, StreamProcessor stream_handler)
+void Httpd::uri(const std::string &uri, const size_t method_mask,
+                RequestProcessor handler, StreamProcessor stream_handler)
 {
   handlers_.insert(
     std::make_pair(uri, std::make_pair(method_mask, std::move(handler))));
@@ -156,23 +148,22 @@ void Httpd::uri(const std::string &uri, RequestProcessor handler)
 void Httpd::redirect_uri(const string &source, const string &target)
 {
   redirect_uris_.insert(
-    std::make_pair(std::move(source)
-                 , std::make_shared<RedirectResponse>(target)));
+    std::make_pair(std::move(source),
+                   std::make_shared<RedirectResponse>(target)));
 }
 
-void Httpd::static_uri(const string &uri, const uint8_t *payload
-                     , const size_t length, const string &mime_type
-                     , const string &encoding, bool cached)
+void Httpd::static_uri(const string &uri, const uint8_t *payload,
+                       const size_t length, const string &mime_type,
+                       const string &encoding, bool cached)
 {
   static_uris_.insert(
-    std::make_pair(uri
-                 , std::make_shared<StaticResponse>(payload, length, mime_type
-                                                  , encoding, cached)));
+    std::make_pair(uri, std::make_shared<StaticResponse>(payload, length,
+                                                         mime_type, encoding,
+                                                         cached)));
   if (cached)
   {
     static_cached_.insert(
-      std::make_pair(uri
-                  , std::make_shared<AbstractHttpResponse>(
+      std::make_pair(uri, std::make_shared<AbstractHttpResponse>(
                       HttpStatusCode::STATUS_NOT_MODIFIED)));
   }
 }
@@ -231,17 +222,17 @@ void Httpd::new_connection(int fd)
   {
     source.sin_addr.s_addr = 0;
   }
-  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[%s fd:%d/%s] Connected", name_.c_str()
-    , fd, ipv4_to_string(ntohl(source.sin_addr.s_addr)).c_str());
+  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[%s fd:%d/%s] Connected", name_.c_str(),
+      fd, ipv4_to_string(ntohl(source.sin_addr.s_addr)).c_str());
   // Set socket receive timeout
   ERRNOCHECK("setsockopt_recv_timeout",
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &socket_timeout_
-             , sizeof(struct timeval)));
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &socket_timeout_,
+               sizeof(struct timeval)));
 
   // Set socket send timeout
   ERRNOCHECK("setsockopt_send_timeout",
-    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &socket_timeout_
-             , sizeof(struct timeval)));
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &socket_timeout_,
+               sizeof(struct timeval)));
 
   // Reconfigure the socket for non-blocking operations
   ::fcntl(fd, F_SETFL, O_RDWR | O_NONBLOCK);
@@ -252,19 +243,19 @@ void Httpd::new_connection(int fd)
     new(std::nothrow) HttpRequestFlow(this, fd, ntohl(source.sin_addr.s_addr));
   if (req == nullptr)
   {
-    LOG_ERROR("[%s fd:%d/%s] Failed to allocate request handler, closing!"
-            , name_.c_str(), fd
-            , ipv4_to_string(ntohl(source.sin_addr.s_addr)).c_str());
+    LOG_ERROR("[%s fd:%d/%s] Failed to allocate request handler, closing!",
+              name_.c_str(), fd,
+              ipv4_to_string(ntohl(source.sin_addr.s_addr)).c_str());
     ::close(fd);
   }
 }
 
-void Httpd::captive_portal(string first_access_response
-                         , string auth_uri, uint64_t auth_timeout)
+void Httpd::captive_portal(string first_access_response,
+                           string auth_uri, uint64_t auth_timeout)
 {
   captive_response_ =
-    std::make_shared<StringResponse>(first_access_response
-                                   , MIME_TYPE_TEXT_HTML);
+    std::make_shared<StringResponse>(first_access_response,
+                                     MIME_TYPE_TEXT_HTML);
   captive_no_content_ = 
     std::make_shared<AbstractHttpResponse>(HttpStatusCode::STATUS_NO_CONTENT);
   captive_ok_ = 
@@ -275,8 +266,8 @@ void Httpd::captive_portal(string first_access_response
     std::make_shared<StringResponse>("success", MIME_TYPE_TEXT_PLAIN);
   captive_success_ios_= 
     std::make_shared<StringResponse>("<HTML><HEAD><TITLE>Success</TITLE></HEAD>"
-                                     "<BODY>Success</BODY></HTML>"
-                                   , MIME_TYPE_TEXT_HTML);
+                                     "<BODY>Success</BODY></HTML>",
+                                     MIME_TYPE_TEXT_HTML);
   captive_auth_uri_.assign(std::move(auth_uri));
   captive_timeout_ = auth_timeout;
   captive_active_ = true;
@@ -425,8 +416,8 @@ bool Httpd::is_request_too_large(HttpRequest *req)
     uint32_t len = std::stoul(req->header(HttpHeader::CONTENT_LENGTH));
     if (len > config_httpd_max_req_size())
     {
-      LOG_ERROR("[Httpd uri:%s] Request body too large %d > %d!"
-              , req->uri().c_str(), len, config_httpd_max_req_size());
+      LOG_ERROR("[Httpd uri:%s] Request body too large %d > %d!",
+                req->uri().c_str(), len, config_httpd_max_req_size());
       // request size too big
       return true;
     }
@@ -434,9 +425,9 @@ bool Httpd::is_request_too_large(HttpRequest *req)
 #if CONFIG_HTTP_SERVER_LOG_LEVEL == VERBOSE
   else
   {
-    LOG(CONFIG_HTTP_SERVER_LOG_LEVEL
-      , "[Httpd] Request does not have Content-Length header:\n%s"
-      , req->to_string().c_str());
+    LOG(CONFIG_HTTP_SERVER_LOG_LEVEL,
+        "[Httpd] Request does not have Content-Length header:\n%s",
+        req->to_string().c_str());
   }
 #endif
 
@@ -451,8 +442,8 @@ bool Httpd::is_servicable_uri(HttpRequest *req)
   if ((req->method() == HttpMethod::GET && have_known_response(req->uri())) ||
       websocket_uris_.find(req->uri()) != websocket_uris_.end())
   {
-    LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] Known GET URI"
-      , req->uri().c_str());
+    LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] Known GET URI",
+        req->uri().c_str());
     return true;
   }
 
@@ -464,9 +455,9 @@ bool Httpd::is_servicable_uri(HttpRequest *req)
       req->content_type() == ContentType::MULTIPART_FORMDATA)
   {
     auto processor = stream_handler(req->uri());
-    LOG(CONFIG_HTTP_SERVER_LOG_LEVEL
-      , "[Httpd uri:%s] POST/PUT request, streamproc found: %d"
-      , req->uri().c_str(), processor != nullptr);
+    LOG(CONFIG_HTTP_SERVER_LOG_LEVEL,
+        "[Httpd uri:%s] POST/PUT request, streamproc found: %d",
+        req->uri().c_str(), processor != nullptr);
     return processor != nullptr;
   }
 
@@ -479,8 +470,8 @@ bool Httpd::is_servicable_uri(HttpRequest *req)
 
 RequestProcessor Httpd::handler(HttpMethod method, const std::string &uri)
 {
-  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] Searching for URI handler"
-    , uri.c_str());
+  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] Searching for URI handler",
+      uri.c_str());
   if (handlers_.count(uri))
   {
     auto handler = handlers_[uri];
@@ -489,21 +480,21 @@ RequestProcessor Httpd::handler(HttpMethod method, const std::string &uri)
       return handler.second;
     }
   }
-  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] No suitable handler found"
-    , uri.c_str());
+  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] No suitable handler found",
+      uri.c_str());
   return nullptr;
 }
 
 StreamProcessor Httpd::stream_handler(const std::string &uri)
 {
-  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL
-    , "[Httpd uri:%s] Searching for URI stream handler", uri.c_str());
+  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL,
+      "[Httpd uri:%s] Searching for URI stream handler", uri.c_str());
   if (stream_handlers_.count(uri))
   {
     return stream_handlers_[uri];
   }
-  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL
-    , "[Httpd uri:%s] No suitable stream handler found", uri.c_str());
+  LOG(CONFIG_HTTP_SERVER_LOG_LEVEL,
+      "[Httpd uri:%s] No suitable stream handler found", uri.c_str());
   return nullptr;
 }
 

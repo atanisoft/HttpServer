@@ -240,6 +240,7 @@ enum HttpHeader
   WS_VERSION,
   WS_KEY,
   WS_ACCEPT,
+  WS_SEC_EXTENSIONS
 };
 
 /// Commonly used and well-known values for the Content-Type HTTP header.
@@ -291,6 +292,8 @@ static constexpr const char * HTTP_CONNECTION_UPGRADE = "Upgrade";
 // TODO: introduce enum constant for this value
 static constexpr const char * HTTP_UPGRADE_HEADER_WEBSOCKET = "websocket";
 
+static constexpr const char * HTTP_WEBSOCKET_VERSION = "13";
+
 // HTTP end of line characters
 static constexpr const char * HTML_EOL = "\r\n";
 
@@ -333,8 +336,8 @@ public:
   /// response.
   /// @param mime_type is the mime type to send as part of the Content-Type
   /// header.
-  AbstractHttpResponse(HttpStatusCode code=STATUS_NOT_FOUND
-                     , const std::string &mime_type=MIME_TYPE_TEXT_PLAIN);
+  AbstractHttpResponse(HttpStatusCode code = STATUS_NOT_FOUND,
+                       const std::string &mime_type = MIME_TYPE_TEXT_PLAIN);
 
   /// Destructor.
   ~AbstractHttpResponse();
@@ -351,8 +354,8 @@ public:
   /// @return a buffer containing the HTTP response. This buffer is owned by
   /// the @ref AbstractHttpResponse and does not need to be
   /// freed by the caller.
-  uint8_t *get_headers(size_t *len, bool keep_alive=false
-                     , bool add_keep_alive=true);
+  uint8_t *get_headers(size_t *len, bool keep_alive = false,
+                       bool add_keep_alive = true);
 
   /// Encodes the HTTP response into a string which can be printed. This is
   /// used by @ref get_headers internally with include_body set to false.
@@ -365,8 +368,8 @@ public:
   /// included in the response.
   ///
   /// @return the request as a printable string.
-  std::string to_string(bool include_body=false, bool keep_alive=false
-                      , bool add_keep_alive=true);
+  std::string to_string(bool include_body = false, bool keep_alive = false,
+                        bool add_keep_alive = true);
 
   /// @return the response body as a buffer which can be streamed. This buffer
   /// is owned by the @ref AbstractHttpResponse and does not
@@ -490,10 +493,10 @@ public:
   /// HTTP Header.
   /// @param cached allows control of the Cache-Control header, when true the
   /// response will be cached by the client and when false it will not.
-  StaticResponse(const uint8_t *payload, const size_t length
-               , const std::string mime_type
-               , const std::string encoding = HTTP_ENCODING_NONE
-               , bool cached = true);
+  StaticResponse(const uint8_t *payload, const size_t length,
+                 const std::string mime_type,
+                 const std::string encoding = HTTP_ENCODING_NONE,
+                 bool cached = true);
 
   /// @return the pre-formatted body of this response.
   const uint8_t *get_body() override
@@ -734,28 +737,28 @@ http::AbstractHttpResponse * name (http::HttpRequest * request)
 /// @ref HttpRequest::set_status or returning a pointer to a
 /// @ref AbstractHttpResponse.
 typedef std::function<
-  http::AbstractHttpResponse *(http::HttpRequest * /** request */
-                             , const std::string & /** filename*/
-                             , size_t              /** size    */
-                             , const uint8_t *     /** data    */
-                             , size_t              /** length  */
-                             , size_t              /** offset  */
-                             , bool                /** final   */
-                             , bool *              /** abort   */
+  http::AbstractHttpResponse *(http::HttpRequest *, /** request */
+                               const std::string &, /** filename*/
+                               size_t,              /** size    */
+                               const uint8_t *,     /** data    */
+                               size_t,              /** length  */
+                               size_t,              /** offset  */
+                               bool,                /** final   */
+                               bool *               /** abort   */
                              )> StreamProcessor;
 
 #define HTTP_STREAM_HANDLER(name)                                             \
-http::AbstractHttpResponse * name (http::HttpRequest *request                 \
-                             , const std::string &filename, size_t size       \
-                             , const uint8_t *data, size_t length             \
-                             , size_t offset, bool final, bool *abort)
+http::AbstractHttpResponse * name (http::HttpRequest *request,                \
+                               const std::string &filename, size_t size,      \
+                               const uint8_t *data, size_t length,            \
+                               size_t offset, bool final, bool *abort)
 
-#define HTTP_STREAM_HANDLER_IMPL(name, request, filename, size, data, length  \
-                               , offset, final, abort)                        \
-http::AbstractHttpResponse * name (http::HttpRequest * request                \
-                                 , const std::string & filename, size_t size  \
-                                 , const uint8_t * data, size_t length        \
-                                 , size_t offset, bool final, bool * abort)
+#define HTTP_STREAM_HANDLER_IMPL(name, request, filename, size, data, length, \
+                                 offset, final, abort)                        \
+http::AbstractHttpResponse * name (http::HttpRequest * request,               \
+                                   const std::string & filename, size_t size, \
+                                   const uint8_t * data, size_t length,       \
+                                   size_t offset, bool final, bool * abort)
 
 /// WebSocket processing Handler.
 ///
@@ -774,19 +777,19 @@ http::AbstractHttpResponse * name (http::HttpRequest * request                \
 /// additional details about the WebSocket client, queue response text or
 /// binary data for delivery at next available opportunity, or request the
 /// WebSocket connection to be closed.
-typedef std::function<void(http::WebSocketFlow *  /* websocket */
-                         , http::WebSocketEvent   /* event */
-                         , uint8_t *              /* data */
-                         , size_t                 /* data length */
+typedef std::function<void(http::WebSocketFlow *,  /* websocket */
+                           http::WebSocketEvent,   /* event */
+                           uint8_t *,              /* data */
+                           size_t                  /* data length */
                          )> WebSocketHandler;
 
 #define WEBSOCKET_STREAM_HANDLER(name)                                      \
-void name (http::WebSocketFlow *, http::WebSocketEvent, const uint8_t *     \
-         , size_t);
+void name (http::WebSocketFlow *, http::WebSocketEvent, const uint8_t *,    \
+           size_t);
 
 #define WEBSOCKET_STREAM_HANDLER_IMPL(name, websocket, event, data, length) \
-void name (http::WebSocketFlow * websocket, http::WebSocketEvent event      \
-         , const uint8_t * data, size_t length)
+void name (http::WebSocketFlow * websocket, http::WebSocketEvent event,     \
+           const uint8_t * data, size_t length)
 
 /// HTTP Server implementation
 class Httpd : public Service, public Singleton<Httpd>
@@ -800,9 +803,9 @@ public:
   /// @param name is the name to use for the executor, default is "httpd".
   /// @param service_name is the mDNS service name to advertise when the server
   /// is active, default is _http._tcp.
-  Httpd(MDNS *mdns = nullptr, uint16_t port = DEFAULT_HTTP_PORT
-      , const std::string &name = "httpd"
-      , const std::string service_name = "_http._tcp");
+  Httpd(MDNS *mdns = nullptr, uint16_t port = DEFAULT_HTTP_PORT,
+        const std::string &name = "httpd",
+        const std::string service_name = "_http._tcp");
 
   /// Constructor.
   ///
@@ -813,9 +816,9 @@ public:
   /// @param name is the name to use for the executor, default is "httpd".
   /// @param service_name is the mDNS service name to advertise when the server
   /// is active, default is _http._tcp.
-  Httpd(ExecutorBase *executor, MDNS *mdns = nullptr
-      , uint16_t port = DEFAULT_HTTP_PORT, const std::string &name = "httpd"
-      , const std::string service_name = "_http._tcp");
+  Httpd(ExecutorBase *executor, MDNS *mdns = nullptr,
+        uint16_t port = DEFAULT_HTTP_PORT, const std::string &name = "httpd",
+        const std::string service_name = "_http._tcp");
 
 #ifdef CONFIG_IDF_TARGET
   /// Constructor.
@@ -845,9 +848,9 @@ public:
   /// function will not be invoked.
   /// @param stream_handler is the @ref StreamProcessor to invoke when this URI
   /// is requested as POST/PUT and the request has a body payload.
-  void uri(const std::string &uri, const size_t method_mask
-         , RequestProcessor handler
-         , StreamProcessor stream_handler = nullptr);
+  void uri(const std::string &uri, const size_t method_mask,
+           RequestProcessor handler,
+           StreamProcessor stream_handler = nullptr);
 
   /// Registers a URI with the provided handler that can process all
   /// @ref HttpMethod values. Note that any request with a body payload will
@@ -881,10 +884,10 @@ public:
   /// Content-Encoding header will not be transmitted.
   /// @param cached allows control of the Cache-Control header, when true the
   /// response will be cached by the client and when false it will not.
-  void static_uri(const std::string &uri, const uint8_t *content
-                , const size_t length, const std::string &mime_type
-                , const std::string &encoding = HTTP_ENCODING_NONE
-                , bool cached = true);
+  void static_uri(const std::string &uri, const uint8_t *content,
+                  const size_t length, const std::string &mime_type,
+                  const std::string &encoding = HTTP_ENCODING_NONE,
+                  bool cached = true);
 
   /// Registers a WebSocket handler for a given URI.  ///
   /// @param uri is the URI to process as a WebSocket endpoint.
@@ -916,6 +919,9 @@ public:
   /// Creates a new @ref HttpRequestFlow for the provided socket handle.
   ///
   /// @param fd is the socket handle.
+  ///
+  /// NOTE: This method is not intended for use outside of the @ref Httpd
+  /// itself.
   void new_connection(int fd);
 
   /// Enables processing of known captive portal endpoints.
@@ -947,9 +953,9 @@ public:
   /// | /kindle-wifi/wifiredirect.html | Kindle |
   /// | /kindle-wifi/wifistub.html | Kindle |
   ///
-  void captive_portal(std::string first_access_response
-                    , std::string auth_uri = "/captiveauth"
-                    , uint64_t auth_timeout = UINT32_MAX);
+  void captive_portal(std::string first_access_response,
+                      std::string auth_uri = "/captiveauth",
+                      uint64_t auth_timeout = UINT32_MAX);
 
   /// Starts the HTTP and DNS listeners.
   ///
@@ -1276,13 +1282,10 @@ public:
   /// @param remote_ip is the remote IP address (if known).
   /// @param ws_key is the "Sec-WebSocket-Key" HTTP Header from the initial
   /// request.
-  /// @param ws_version is the "Sec-WebSocket-Version" HTTP header from the
-  /// initial request.
   /// @param handler is the @ref WebSocketHandler that will process the events
   /// as they are raised.
-  WebSocketFlow(Httpd *server, int fd, uint32_t remote_ip
-              , const std::string &ws_key, const std::string &ws_version
-              , WebSocketHandler handler);
+  WebSocketFlow(Httpd *server, int fd, uint32_t remote_ip,
+                const std::string &ws_key, WebSocketHandler handler);
 
   /// Destructor.
   ~WebSocketFlow();
@@ -1383,8 +1386,8 @@ private:
   uint8_t buf_attempts_;
   Callback buf_next_;
   Callback buf_next_timeout_;
-  Action read_fully_with_timeout(void *buf, size_t size, size_t attempts
-                               , Callback success, Callback timeout);
+  Action read_fully_with_timeout(void *buf, size_t size, size_t attempts,
+                                 Callback success, Callback timeout);
   STATE_FLOW_STATE(data_received);
 
   /// Internal state flow for reading a websocket frame of data and sending

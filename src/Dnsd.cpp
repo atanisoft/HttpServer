@@ -40,6 +40,10 @@
 #include <utils/format_utils.hxx>
 #include <utils/logging.h>
 
+#ifndef CONFIG_HTTP_DNS_LOG_LEVEL
+#define CONFIG_HTTP_DNS_LOG_LEVEL VERBOSE
+#endif
+
 namespace http
 {
 
@@ -50,10 +54,10 @@ static void* dns_thread_start(void* arg)
 }
 
 Dnsd::Dnsd(uint32_t ip, string name, uint16_t port)
-  : local_ip_(ip), name_(name), port_(port)
-  , dns_thread_(name_.c_str(), config_dnsd_priority(), config_dnsd_stack_size()
-              , dns_thread_start, nullptr)
-  , buffer_(config_dnsd_buffer_size(), 0)
+  : local_ip_(ip), name_(name), port_(port),
+    dns_thread_(name_.c_str(), config_dnsd_priority(),
+                config_dnsd_stack_size(), dns_thread_start, nullptr),
+    buffer_(config_dnsd_buffer_size(), 0)
 {
   
 }
@@ -83,16 +87,16 @@ void Dnsd::dns_process_thread()
   ERRNOCHECK("bind",
              ::bind(fd, (struct sockaddr *) &addr, sizeof(addr)));
 
-  LOG(INFO, "[%s] Listening on port %d, fd %d, using %s for local IP"
-    , name_.c_str(), port_, fd, ipv4_to_string(local_ip_).c_str());
+  LOG(INFO, "[%s] Listening on port %d, fd %d, using %s for local IP",
+      name_.c_str(), port_, fd, ipv4_to_string(local_ip_).c_str());
   while (!shutdown_)
   {
     sockaddr_in source;
     socklen_t source_len = sizeof(sockaddr_in);
     bzero(buffer_.data(), config_dnsd_buffer_size());
     // This will block the thread until it receives a message on the socket.
-    int len = ::recvfrom(fd, buffer_.data(), config_dnsd_buffer_size()
-                       , DNS_RECVFROM_FLAGS, (sockaddr *)&source, &source_len);
+    int len = ::recvfrom(fd, buffer_.data(), config_dnsd_buffer_size(),
+                         DNS_RECVFROM_FLAGS, (sockaddr *)&source, &source_len);
     if (len >= sizeof(DNSHeader))
     {
       DNSHeader *header = (DNSHeader *)buffer_.data();
@@ -131,23 +135,22 @@ void Dnsd::dns_process_thread()
         // no domain name to look up, discard the request and get another.
         continue;
       }
-      LOG(CONFIG_HTTP_DNS_LOG_LEVEL
-        , "[%s <- %s] id: %d, rd:%d, tc:%d, aa:%d, opc:%d, qr:%d, rc:%d, z:%d "
-          "ra:%d, q:%d, a:%d, au:%d, res:%d, len:%d, domain:%s"
-        , name_.c_str(), inet_ntoa(source.sin_addr), header->id, header->rd
-        , header->tc, header->aa, header->opc, header->qr, header->rc
-        , header->z, header->ra, header->questions, header->answers
-        , header->authorties, header->resources, len
-        , parsed_domain_name.c_str());
+      LOG(CONFIG_HTTP_DNS_LOG_LEVEL,
+          "[%s <- %s] id: %d, rd:%d, tc:%d, aa:%d, opc:%d, qr:%d, rc:%d, z:%d "
+          "ra:%d, q:%d, a:%d, au:%d, res:%d, len:%d, domain:%s",
+          name_.c_str(), inet_ntoa(source.sin_addr), header->id, header->rd,
+          header->tc, header->aa, header->opc, header->qr, header->rc,
+          header->z, header->ra, header->questions, header->answers,
+          header->authorties, header->resources, len,
+          parsed_domain_name.c_str());
       // check if it is a request or response, qr = 0 and opc = 0 is request
       if (!header->qr && !header->opc)
       {
         if ((len + sizeof(DNSResponse)) > config_dnsd_buffer_size())
         {
           LOG_ERROR("[%s] Buffer overrun (req:%d, resp:%d, buf:%d), dropping "
-                    "request!"
-                  , name_.c_str(), len, len + sizeof(DNSResponse)
-                  , config_dnsd_buffer_size());
+                    "request!", name_.c_str(), len, len + sizeof(DNSResponse),
+                    config_dnsd_buffer_size());
           continue;
         }
         // convert the request to a response by modifying the request header.
@@ -157,23 +160,23 @@ void Dnsd::dns_process_thread()
         // response payload
         DNSResponse response =
         {
-          .id = htons(0xC00C)
-        , .answer = htons(1)
-        , .classes = htons(1)
-        , .ttl = htonl(60)
-        , .length = htons(sizeof(uint32_t))
-        , .address = htonl(local_ip_)
+          .id = htons(0xC00C),
+          .answer = htons(1),
+          .classes = htons(1),
+          .ttl = htonl(60),
+          .length = htons(sizeof(uint32_t)),
+          .address = htonl(local_ip_)
         };
         // Add the response payload to the buffer for sending
         memcpy(buffer_.data() + len, &response, sizeof(DNSResponse));
-        LOG(CONFIG_HTTP_DNS_LOG_LEVEL, "[%s -> %s] %s -> %s", name_.c_str()
-          , inet_ntoa(source.sin_addr), parsed_domain_name.c_str()
-          , ipv4_to_string(local_ip_).c_str());
+        LOG(CONFIG_HTTP_DNS_LOG_LEVEL, "[%s -> %s] %s -> %s", name_.c_str(),
+            inet_ntoa(source.sin_addr), parsed_domain_name.c_str(),
+            ipv4_to_string(local_ip_).c_str());
         // send the response to the caller
-        ERRNOCHECK("sendto", sendto(fd, buffer_.data()
-                                  , len + sizeof(DNSResponse), DNS_SENDTO_FLAGS
-                                  , (const sockaddr*)&source
-                                  , sizeof(sockaddr_in)));
+        ERRNOCHECK("sendto", sendto(fd, buffer_.data(),
+                                    len + sizeof(DNSResponse), DNS_SENDTO_FLAGS,
+                                    (const sockaddr*)&source,
+                                    sizeof(sockaddr_in)));
       }
     }
     else

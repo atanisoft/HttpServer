@@ -34,6 +34,10 @@
 
 #include "Httpd.h"
 
+#ifndef CONFIG_HTTP_RESP_LOG_LEVEL
+#define CONFIG_HTTP_RESP_LOG_LEVEL VERBOSE
+#endif
+
 namespace http
 {
 
@@ -112,50 +116,50 @@ uint8_t *AbstractHttpResponse::get_headers(size_t *len, bool keep_alive
   return (uint8_t *)encoded_headers_.c_str();
 }
 
-string AbstractHttpResponse::to_string(bool include_body, bool keep_alive
-                                     , bool add_keep_alive)
+string AbstractHttpResponse::to_string(bool include_body, bool keep_alive,
+                                       bool add_keep_alive)
 {
-  encoded_headers_.assign(StringPrintf("HTTP/1.1 %d %s%s", code_
-                                      , http_code_strings[code_].c_str()
-                                      , HTML_EOL));
+  encoded_headers_.assign(StringPrintf("HTTP/1.1 %d %s%s", code_,
+                                        http_code_strings[code_].c_str(),
+                                        HTML_EOL));
   for (auto &ent : headers_)
   {
-    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %s", ent.first.c_str()
-      , ent.second.c_str());
+    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %s",
+        ent.first.c_str(), ent.second.c_str());
     encoded_headers_.append(
-      StringPrintf("%s: %s%s", ent.first.c_str(), ent.second.c_str()
-                  , HTML_EOL));
+      StringPrintf("%s: %s%s", ent.first.c_str(), ent.second.c_str(),
+                   HTML_EOL));
   }
 
   if (get_body_length())
   {
-    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %zu"
-      , well_known_http_headers[HttpHeader::CONTENT_LENGTH]
-      , get_body_length());
+    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %zu",
+        well_known_http_headers[HttpHeader::CONTENT_LENGTH],
+        get_body_length());
     encoded_headers_.append(
-      StringPrintf("%s: %zu%s"
-                 , well_known_http_headers[HttpHeader::CONTENT_LENGTH]
-                 , get_body_length(), HTML_EOL));
-    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %s"
-      , well_known_http_headers[HttpHeader::CONTENT_TYPE]
-      , get_body_mime_type().c_str());
+      StringPrintf("%s: %zu%s",
+                   well_known_http_headers[HttpHeader::CONTENT_LENGTH],
+                   get_body_length(), HTML_EOL));
+    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %s",
+        well_known_http_headers[HttpHeader::CONTENT_TYPE],
+        get_body_mime_type().c_str());
     encoded_headers_.append(
-      StringPrintf("%s: %s%s"
-                 , well_known_http_headers[HttpHeader::CONTENT_TYPE]
-                 , get_body_mime_type().c_str(), HTML_EOL));
+      StringPrintf("%s: %s%s",
+                   well_known_http_headers[HttpHeader::CONTENT_TYPE],
+                   get_body_mime_type().c_str(), HTML_EOL));
   }
 
   if (add_keep_alive)
   {
     string connection = keep_alive ? HTTP_CONNECTION_CLOSE
                                   : HTTP_CONNECTION_KEEP_ALIVE;
-    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %s"
-      , well_known_http_headers[HttpHeader::CONNECTION]
-      , connection.c_str());
+    LOG(CONFIG_HTTP_RESP_LOG_LEVEL, "[resp-header] %s -> %s",
+        well_known_http_headers[HttpHeader::CONNECTION],
+        connection.c_str());
     encoded_headers_.append(
-      StringPrintf("%s: %s%s"
-                 , well_known_http_headers[HttpHeader::CONNECTION]
-                 , connection.c_str(), HTML_EOL));
+      StringPrintf("%s: %s%s",
+                   well_known_http_headers[HttpHeader::CONNECTION],
+                   connection.c_str(), HTML_EOL));
   }
 
   // leave blank line after headers before the body
@@ -177,8 +181,7 @@ void AbstractHttpResponse::header(const string &name, const string &value)
   }
 }
 
-void AbstractHttpResponse::header(const HttpHeader name
-                                , const string &value)
+void AbstractHttpResponse::header(const HttpHeader name, const string &value)
 {
   header(well_known_http_headers[name], value);
 }
@@ -190,17 +193,17 @@ RedirectResponse::RedirectResponse(const string &target_uri)
 }
 
 StringResponse::StringResponse(const string &response, const string &mime_type)
-  : AbstractHttpResponse(HttpStatusCode::STATUS_OK, mime_type)
-  , response_(std::move(response))
+  : AbstractHttpResponse(HttpStatusCode::STATUS_OK, mime_type),
+    response_(std::move(response))
 {
 }
 
-StaticResponse::StaticResponse(const uint8_t *payload, const size_t length
-                             , const std::string mime_type
-                             , const std::string encoding
-                             , bool cached)
-                             : AbstractHttpResponse(STATUS_OK, mime_type)
-                             , payload_(payload), length_(length)
+StaticResponse::StaticResponse(const uint8_t *payload, const size_t length,
+                               const std::string mime_type,
+                               const std::string encoding,
+                               bool cached)
+                             : AbstractHttpResponse(STATUS_OK, mime_type),
+                               payload_(payload), length_(length)
 {
   if (!encoding.empty())
   {
@@ -210,12 +213,9 @@ StaticResponse::StaticResponse(const uint8_t *payload, const size_t length
   if (cached)
   {
     // set the default cache strategy to set the must-revalidate and max-age
-    header(HttpHeader::CACHE_CONTROL
-        , StringPrintf("%s, %s, %s=%d"
-                      , HTTP_CACHE_CONTROL_NO_CACHE
-                      , HTTP_CACHE_CONTROL_MUST_REVALIDATE
-                      , HTTP_CACHE_CONTROL_MAX_AGE
-                      , config_httpd_cache_max_age_sec()));
+    header(HttpHeader::CACHE_CONTROL, StringPrintf("%s, %s, %s=%d",
+           HTTP_CACHE_CONTROL_NO_CACHE, HTTP_CACHE_CONTROL_MUST_REVALIDATE,
+           HTTP_CACHE_CONTROL_MAX_AGE, config_httpd_cache_max_age_sec()));
   }
   else
   {

@@ -65,8 +65,8 @@ public:
   /// @param local_ip is the address to respond to all DNS requests with.
   /// @param name is the name of the thread created for the DNS server.
   /// @param port is the UDP port to listen on.
-  Dnsd(uint32_t local_ip, std::string name = "dnsd"
-     , uint16_t port = DEFAULT_DNS_PORT);
+  Dnsd(uint32_t local_ip, std::string name = "dnsd",
+       uint16_t port = DEFAULT_DNS_PORT);
   /// Destructor.
   ~Dnsd();
 

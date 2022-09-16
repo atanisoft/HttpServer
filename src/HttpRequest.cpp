@@ -34,6 +34,12 @@
 
 #include "Httpd.h"
 
+#include <utils/logging.h>
+
+#ifndef CONFIG_HTTP_REQ_LOG_LEVEL
+#define CONFIG_HTTP_REQ_LOG_LEVEL VERBOSE
+#endif
+
 namespace http
 {
 
@@ -46,29 +52,30 @@ static constexpr const char * HTTP_METHOD_PUT = "PUT";
 
 std::map<HttpHeader, const char *> well_known_http_headers =
 {
-  { ACCEPT, "Accept" }
-, { CACHE_CONTROL, "Cache-Control" }
-, { CONNECTION, "Connection" }
-, { CONTENT_ENCODING, "Content-Encoding" }
-, { CONTENT_TYPE, "Content-Type" }
-, { CONTENT_LENGTH, "Content-Length" }
-, { CONTENT_DISPOSITION, "Content-Disposition" }
-, { EXPECT, "Expect" }
-, { HOST, "Host" }
-, { IF_MODIFIED_SINCE, "If-Modified-Since" }
-, { LAST_MODIFIED, "Last-Modified" }
-, { LOCATION, "Location" }
-, { ORIGIN, "Origin" }
-, { UPGRADE, "Upgrade" }
-, { WS_VERSION, "Sec-WebSocket-Version" }
-, { WS_KEY, "Sec-WebSocket-Key" }
-, { WS_ACCEPT, "Sec-WebSocket-Accept"}
+  { ACCEPT, "Accept" },
+  { CACHE_CONTROL, "Cache-Control" },
+  { CONNECTION, "Connection" },
+  { CONTENT_ENCODING, "Content-Encoding" },
+  { CONTENT_TYPE, "Content-Type" },
+  { CONTENT_LENGTH, "Content-Length" },
+  { CONTENT_DISPOSITION, "Content-Disposition" },
+  { EXPECT, "Expect" },
+  { HOST, "Host" },
+  { IF_MODIFIED_SINCE, "If-Modified-Since" },
+  { LAST_MODIFIED, "Last-Modified" },
+  { LOCATION, "Location" },
+  { ORIGIN, "Origin" },
+  { UPGRADE, "Upgrade" },
+  { WS_VERSION, "Sec-WebSocket-Version" },
+  { WS_KEY, "Sec-WebSocket-Key" },
+  { WS_ACCEPT, "Sec-WebSocket-Accept"},
+  { WS_SEC_EXTENSIONS, "Sec-WebSocket-Extensions"}
 };
 
 void HttpRequest::method(const string &value)
 {
-  LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-    , "[HttpReq %p] Setting Method: %s", this, value.c_str());
+  LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+      "[HttpReq %p] Setting Method: %s", this, value.c_str());
   raw_method_.assign(std::move(value));
   if (!raw_method_.compare(HTTP_METHOD_DELETE))
   {
@@ -113,8 +120,8 @@ const string &HttpRequest::uri()
 
 void HttpRequest::uri(const string &value)
 {
-  LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-    , "[HttpReq %p] Setting URI: %s", this, value.c_str());
+  LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+      "[HttpReq %p] Setting URI: %s", this, value.c_str());
   uri_.assign(std::move(value));
 }
 
@@ -122,9 +129,9 @@ void HttpRequest::param(const string &name, const string &value)
 {
   if (params_.size() < config_httpd_max_param_count())
   {
-    LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-      , "[HttpReq %p] Adding param: %s: %s", this, name.c_str()
-      , value.c_str());
+    LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+        "[HttpReq %p] Adding param: %s: %s", this, name.c_str(),
+        value.c_str());
     params_[name] = value;
   }
   else
@@ -138,9 +145,9 @@ void HttpRequest::header(const string &name, const string &value)
 {
   if (headers_.size() < config_httpd_max_header_count())
   {
-    LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-      , "[HttpReq %p] Adding header: %s: %s", this, name.c_str()
-      , value.c_str());
+    LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+        "[HttpReq %p] Adding header: %s: %s", this, name.c_str(),
+        value.c_str());
     headers_[name] = value;
   }
   else
@@ -154,22 +161,22 @@ void HttpRequest::header(HttpHeader header, std::string value)
 {
   if (has_header(header))
   {
-    LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-      , "[HttpReq %p] Replacing header: %s: %s (old: %s)", this
-      , well_known_http_headers[header], value.c_str()
-      , headers_[well_known_http_headers[header]].c_str());
+    LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+        "[HttpReq %p] Replacing header: %s: %s (old: %s)", this,
+        well_known_http_headers[header], value.c_str(),
+        headers_[well_known_http_headers[header]].c_str());
   }
   else if (headers_.size() < config_httpd_max_header_count())
   {
-    LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-      , "[HttpReq %p] Adding header: %s: %s", this
-      , well_known_http_headers[header], value.c_str());
+    LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+        "[HttpReq %p] Adding header: %s: %s", this,
+        well_known_http_headers[header], value.c_str());
   }
   else
   {
     LOG_ERROR("[HttpReq %p] Discarding header '%s' as maximum header limit "
-              "has been reached!", this
-            , well_known_http_headers[header]);
+              "has been reached!", this,
+              well_known_http_headers[header]);
     return;
   }
   headers_[well_known_http_headers[header]] = value;
@@ -201,8 +208,8 @@ const string &HttpRequest::header(const HttpHeader name)
 
 void HttpRequest::reset()
 {
-  LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-    , "[HttpReq %p] Resetting to blank request", this);
+  LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+      "[HttpReq %p] Resetting to blank request", this);
   headers_.clear();
   params_.clear();
   raw_method_.clear();
@@ -222,8 +229,8 @@ bool HttpRequest::keep_alive()
 
 void HttpRequest::error(bool value)
 {
-  LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-    , "[HttpReq %p] Setting error flag to %d", this, value);
+  LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+      "[HttpReq %p] Setting error flag to %d", this, value);
   error_ = value;
 }
 
@@ -265,12 +272,12 @@ string HttpRequest::param(string name)
 {
   if (params_.find(name) != params_.end())
   {
-    LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-      , "[Req %p] Param %s -> %s", this, name.c_str(), params_[name].c_str());
+    LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+        "[Req %p] Param %s -> %s", this, name.c_str(), params_[name].c_str());
     return params_[name];
   }
-  LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-    , "[Req %p] Param %s doesn't exist", this, name.c_str());
+  LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+      "[Req %p] Param %s doesn't exist", this, name.c_str());
   return no_value_;
 }
 
@@ -278,8 +285,8 @@ bool HttpRequest::param(string name, bool def)
 {
   if (params_.find(name) != params_.end())
   {
-    LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-      , "[Req %p] Param %s -> %s", this, name.c_str(), params_[name].c_str());
+    LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+        "[Req %p] Param %s -> %s", this, name.c_str(), params_[name].c_str());
     auto value = params_[name];
     std::transform(value.begin(), value.end(), value.begin(), ::tolower);
     return value.compare("false");
@@ -291,8 +298,8 @@ int HttpRequest::param(string name, int def)
 {
   if (params_.find(name) != params_.end())
   {
-    LOG(CONFIG_HTTP_REQ_LOG_LEVEL
-      , "[Req %p] Param %s -> %s", this, name.c_str(), params_[name].c_str());
+    LOG(CONFIG_HTTP_REQ_LOG_LEVEL,
+        "[Req %p] Param %s -> %s", this, name.c_str(), params_[name].c_str());
     return std::stoi(params_[name]);
   }
   return def;
@@ -306,20 +313,20 @@ bool HttpRequest::has_param(string name)
 string HttpRequest::to_string()
 {
   string res = StringPrintf("[HttpReq %p] method:%s uri:%s,error:%d,"
-                            "header-count:%zu,param-count:%zu"
-                          , this, raw_method_.c_str(), uri_.c_str(), error_
-                          , headers_.size(), params_.size());
+                            "header-count:%zu,param-count:%zu",
+                            this, raw_method_.c_str(), uri_.c_str(), error_,
+                            headers_.size(), params_.size());
   for (auto &ent : headers_)
   {
     res.append(
-      StringPrintf("\nheader: %s: %s%s", ent.first.c_str(), ent.second.c_str()
-                  , HTML_EOL));
+      StringPrintf("\nheader: %s: %s%s", ent.first.c_str(), ent.second.c_str(),
+                   HTML_EOL));
   }
   for (auto &ent : params_)
   {
     res.append(
-      StringPrintf("\nparam: %s: %s%s", ent.first.c_str(), ent.second.c_str()
-                  , HTML_EOL));
+      StringPrintf("\nparam: %s: %s%s", ent.first.c_str(), ent.second.c_str(),
+                   HTML_EOL));
   }
   return res;
 }
