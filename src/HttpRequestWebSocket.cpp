@@ -104,7 +104,7 @@ WebSocketFlow::WebSocketFlow(Httpd *server, int fd, uint32_t remote_ip
 
       // Disable usage of all WS extensions by default since they are not
       // implemented by this server.
-      resp.header(HttpHeader::WS_SEC_EXTENSIONS, "");
+      //resp.header(HttpHeader::WS_SEC_EXTENSIONS, "");
 
       handshake_.assign(std::move(resp.to_string()));
 

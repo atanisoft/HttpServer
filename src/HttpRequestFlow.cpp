@@ -296,8 +296,12 @@ StateFlowBase::Action HttpRequestFlow::process_request()
       req_.set_status(HttpStatusCode::STATUS_BAD_REQUEST);
       return call_immediately(STATE(abort_request_with_response));
     }
-    else if (!req_.header(HttpHeader::WS_VERSION).compare(HTTP_WEBSOCKET_VERSION))
+    else if (req_.header(HttpHeader::WS_VERSION).compare(HTTP_WEBSOCKET_VERSION))
     {
+      LOG_ERROR("[Httpd fd:%d,uri:%s] Websocket version '%s' does not match '%s'",
+                fd_, req_.uri().c_str(),
+                req_.header(HttpHeader::WS_VERSION).c_str(),
+                HTTP_WEBSOCKET_VERSION);
       // If the websocket version is not as we expect, reject the request with
       // supported version included in the response.
       res_.reset(new AbstractHttpResponse(HttpStatusCode::STATUS_BAD_REQUEST));
