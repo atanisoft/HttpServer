@@ -49,9 +49,6 @@
 
 #include <esp_system.h>
 
-// this method is not exposed via the MDNS class today, declare it here so we
-// can call it if needed. This is implemented inside Esp32WiFiManager.cxx.
-void mdns_unpublish(const char *service);
 #endif // CONFIG_IDF_TARGET
 
 namespace http
@@ -339,12 +336,10 @@ void Httpd::stop_http_listener()
     LOG(INFO, "[%s] Shutting down HTTP listener", name_.c_str());
     listener_.reset();
     http_active_ = false;
-#ifdef CONFIG_IDF_TARGET
     if (mdns_)
     {
-      mdns_unpublish(mdns_service_.c_str());
+      mdns_->unpublish(name_.c_str(), mdns_service_.c_str());
     }
-#endif
     const std::lock_guard<std::mutex> lock(websocketsLock_);
     for (auto &client : websockets_)
     {
