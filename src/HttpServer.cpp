@@ -36,6 +36,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <sys/fcntl.h>
 #include <sys/socket.h>
 
@@ -309,7 +310,7 @@ void Httpd::start_http_listener()
   {
     return;
   }
-  LOG(INFO, "[%s] Starting HTTP listener on port %d", name_.c_str(), port_);
+  LOG(INFO, "[%s] Starting HTTP listener on port %" PRIu16, name_.c_str(), port_);
   listener_.emplace(port_, incoming_http_connection, "HttpSocket");
   http_active_ = true;
   if (mdns_)
@@ -411,7 +412,7 @@ bool Httpd::is_request_too_large(HttpRequest *req)
     uint32_t len = std::stoul(req->header(HttpHeader::CONTENT_LENGTH));
     if (len > config_httpd_max_req_size())
     {
-      LOG_ERROR("[Httpd uri:%s] Request body too large %d > %d!",
+      LOG_ERROR("[Httpd uri:%s] Request body too large %" PRIu32 " > %d!",
                 req->uri().c_str(), len, config_httpd_max_req_size());
       // request size too big
       return true;
