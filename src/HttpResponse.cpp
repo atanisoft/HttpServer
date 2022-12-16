@@ -192,8 +192,9 @@ RedirectResponse::RedirectResponse(const string &target_uri)
   header(HttpHeader::LOCATION, target_uri);
 }
 
-StringResponse::StringResponse(const string &response, const string &mime_type)
-  : AbstractHttpResponse(HttpStatusCode::STATUS_OK, mime_type),
+StringResponse::StringResponse(const string &response, const string &mime_type,
+  const HttpStatusCode code)
+  : AbstractHttpResponse(code, mime_type),
     response_(std::move(response))
 {
 }

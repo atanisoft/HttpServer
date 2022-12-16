@@ -527,11 +527,13 @@ public:
   ///
   /// @param response is the response string to send as the HTTP response body.
   /// @param mime_type is the value to use for the Content-Type HTTP header.
+  /// @param code is the @ref HttpStatuCode to use for this response.
   ///
   /// Note: The ownership of the response object passed into this method will
   /// be transfered to this class instance and will be cleaned up after it has
   /// been sent to the client.
-  StringResponse(const std::string &response, const std::string &mime_type);
+  StringResponse(const std::string &response, const std::string &mime_type,
+                 const HttpStatusCode code = HttpStatusCode::STATUS_OK);
 
   /// @return the pre-formatted body of this response.
   const uint8_t *get_body() override
@@ -557,6 +559,8 @@ public:
   /// Constructor.
   ///
   /// @param response is the response string to send as the HTTP response body.
+  /// @param code is the @ref HttpStatusCode to use for this response, defaults
+  /// to @ref HttpStatusCode::STATUS_OK.
   ///
   /// This calls into @ref StringResponse passing in
   /// @ref MIME_TYPE_APPLICATION_JSON as mime_type.
@@ -564,8 +568,9 @@ public:
   /// Note: The ownership of the response object passed into this method will
   /// be transfered to this class instance and will be cleaned up after it has
   /// been sent to the client.
-  JsonResponse(const std::string &response)
-  : StringResponse(response, MIME_TYPE_APPLICATION_JSON)
+  JsonResponse(const std::string &response,
+               const HttpStatusCode code = HttpStatusCode::STATUS_OK)
+  : StringResponse(response, MIME_TYPE_APPLICATION_JSON, code)
   {
   }
 };
