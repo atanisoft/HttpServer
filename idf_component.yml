@@ -5,9 +5,11 @@ targets:
   - esp32c3
 
 dependencies:
-#  idf: ">=5.0"
+  idf: ">=5.0"
   OpenMRNIDF:
+    version: idf-v5
     git: https://github.com/atanisoft/OpenMRNIDF.git
-#  espressif/mdns: "*"
-#    rules:
-#      if: "idf_version >=5.0"
+  espressif/mdns:
+    version: "^1.0"
+    rules:
+      - if: "idf_version >=5.0"
