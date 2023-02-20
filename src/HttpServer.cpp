@@ -286,6 +286,12 @@ void Httpd::stop_server()
   stop_dns_listener();
 }
 
+bool Httpd::has_websocket_connections()
+{
+  const std::lock_guard<std::mutex> lock(websocketsLock_);
+  return websockets_.size();
+}
+
 void Httpd::init_server()
 {
   // pre-initialize the timeout parameters for all sockets that are accepted

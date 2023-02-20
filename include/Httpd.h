@@ -978,6 +978,14 @@ public:
   /// necessary to call this method.
   void stop_server();
 
+  /// Allows checking if there are any websocket connections present on the
+  /// server. This is useful for avoiding computationally expensive formatting
+  /// of data for websockets when there are no consumers.
+  ///
+  /// @return true if there is at least one websocket connected to the server,
+  /// false otherwise.
+  bool has_websocket_connections();
+
 private:
   /// Gives @ref WebSocketFlow access to protected/private members.
   friend class WebSocketFlow;
