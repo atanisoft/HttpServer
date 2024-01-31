@@ -470,6 +470,26 @@ bool Httpd::is_servicable_uri(HttpRequest *req)
   return processor != nullptr;
 }
 
+bool Httpd::is_captive_auth_required(const uint32_t remote_ip)
+{
+  if (captive_timeout_ == UINT32_MAX ||
+      captive_auth_[remote_ip] < captive_timeout_)
+  {
+    return false;
+  }
+
+  return true;
+}
+
+void Httpd::refresh_captive_auth_timeout(const uint32_t remote_ip)
+{
+  if (captive_timeout_ == UINT32_MAX)
+  {
+    return;
+  }
+  captive_auth_[remote_ip] = os_get_time_monotonic() + captive_timeout_;
+}
+
 RequestProcessor Httpd::handler(HttpMethod method, const std::string &uri)
 {
   LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] Searching for URI handler",

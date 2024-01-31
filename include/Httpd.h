@@ -1060,6 +1060,13 @@ private:
   /// @return true if the @param request can be serviced by this @ref Httpd.
   bool is_servicable_uri(HttpRequest *request);
 
+  /// @return true if the @param remote_ip should be redirected to captive
+  /// portal authentication page.
+  bool is_captive_auth_required(const uint32_t remote_ip);
+
+  /// Refreshes the captive authentication timeout.
+  void refresh_captive_auth_timeout(const uint32_t remote_ip);
+
   /// Name to use for the @ref Httpd server.
   const std::string name_;
 

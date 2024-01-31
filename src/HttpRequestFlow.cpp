@@ -200,9 +200,7 @@ StateFlowBase::Action HttpRequestFlow::parse_header_data()
                         [&](const string &ent) {return !ent.compare(req_.uri());})
             != captive_portal_uris.end() && remote_ip_)
         {
-          if (!server_->captive_auth_.count(remote_ip_) ||
-              (server_->captive_auth_[remote_ip_] > server_->captive_timeout_ &&
-              server_->captive_timeout_ != UINT32_MAX))
+          if (server_->is_captive_auth_required(remote_ip_))
           {
             // new client or authentication expired
             res_ = server_->captive_response_;
@@ -232,8 +230,7 @@ StateFlowBase::Action HttpRequestFlow::parse_header_data()
         else if (server_->captive_active_ &&
                 !server_->captive_auth_uri_.compare(req_.uri()))
         {
-          server_->captive_auth_[remote_ip_] =
-            os_get_time_monotonic() + server_->captive_timeout_;
+          server_->refresh_captive_auth_timeout(remote_ip_);
           res_ = server_->captive_ok_;
         }
         else
