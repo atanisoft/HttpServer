@@ -233,7 +233,7 @@ void Httpd::new_connection(int fd)
                sizeof(struct timeval)));
 
   // Reconfigure the socket for non-blocking operations
-  ::fcntl(fd, F_SETFL, O_RDWR | O_NONBLOCK);
+  ::fcntl(fd, F_SETFL, ::fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
 
   // Start the HTTP processing flow or close the socket if we fail to allocate
   // the request handler.
