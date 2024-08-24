@@ -102,7 +102,7 @@ private:
         uint16_t rd  : 1;
         /// Flag to indicate that the message is truncated.
         uint16_t tc  : 1;
-        /// Flag to indicate that this is an authoritive answer.
+        /// Flag to indicate that this is an authoritative answer.
         uint16_t aa  : 1;
         /// Message type indicator.
         uint16_t opc : 4;

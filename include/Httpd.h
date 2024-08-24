@@ -95,7 +95,7 @@ DECLARE_CONST(httpd_max_header_size);
 /// ignoring new ones. Default is 20.
 DECLARE_CONST(httpd_max_header_count);
 
-/// This controls how many request parameters will be allowed before ignroing
+/// This controls how many request parameters will be allowed before ignoring
 /// new ones. Default is 20.
 DECLARE_CONST(httpd_max_param_count);
 
@@ -375,7 +375,7 @@ public:
   /// is owned by the @ref AbstractHttpResponse and does not
   /// need to be freed by the caller.
   ///
-  /// Note: this method should be overriden by sub-classes to supply the
+  /// Note: this method should be overridden by sub-classes to supply the
   /// response body.
   virtual const uint8_t *get_body()
   {
@@ -384,7 +384,7 @@ public:
 
   /// @return the size of the body payload.
   ///
-  /// Note: this method should be overriden by sub-classes to supply the
+  /// Note: this method should be overridden by sub-classes to supply the
   /// response body.
   virtual size_t get_body_length()
   {
@@ -393,7 +393,7 @@ public:
 
   /// @return the mime type to include in the HTTP response header.
   ///
-  /// Note: this method should be overriden by sub-classes to supply the
+  /// Note: this method should be overridden by sub-classes to supply the
   /// response body.
   std::string get_body_mime_type()
   {
@@ -530,7 +530,7 @@ public:
   /// @param code is the @ref HttpStatuCode to use for this response.
   ///
   /// Note: The ownership of the response object passed into this method will
-  /// be transfered to this class instance and will be cleaned up after it has
+  /// be transferred to this class instance and will be cleaned up after it has
   /// been sent to the client.
   StringResponse(const std::string &response, const std::string &mime_type,
                  const HttpStatusCode code = HttpStatusCode::STATUS_OK);
@@ -566,7 +566,7 @@ public:
   /// @ref MIME_TYPE_APPLICATION_JSON as mime_type.
   ///
   /// Note: The ownership of the response object passed into this method will
-  /// be transfered to this class instance and will be cleaned up after it has
+  /// be transferred to this class instance and will be cleaned up after it has
   /// been sent to the client.
   JsonResponse(const std::string &response,
                const HttpStatusCode code = HttpStatusCode::STATUS_OK)
@@ -965,7 +965,7 @@ public:
   /// Starts the HTTP and DNS listeners.
   ///
   /// @param dns_ip_address IP address to respond with to all DNS queries,
-  /// default value is INADDR_ANY (disabled). Ths will only be used if there
+  /// default value is INADDR_ANY (disabled). This will only be used when there
   /// is a configured captive portal.
   ///
   /// NOTE: On the ESP32 when passing in an Esp32WiFiManager instance it is not
@@ -1111,7 +1111,7 @@ private:
   /// the current version.
   std::map<std::string, std::shared_ptr<AbstractHttpResponse>> static_uris_;
 
-  /// Internal map of all registeres static URIs to use when resource has not
+  /// Internal map of all registered static URIs to use when resource has not
   /// been modified since the client last retrieved it.
   std::map<std::string, std::shared_ptr<AbstractHttpResponse>> static_cached_;
 

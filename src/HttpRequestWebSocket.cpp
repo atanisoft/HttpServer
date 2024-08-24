@@ -118,7 +118,7 @@ WebSocketFlow::WebSocketFlow(Httpd *server, int fd, uint32_t remote_ip
         return;
       }
     }
-    LOG_ERROR("[WebSocket fd:%d] Error estabilishing connection, aborting", fd_);
+    LOG_ERROR("[WebSocket fd:%d] Error establishing connection, aborting", fd_);
 #else // NOT CONFIG_IDF_TARGET
     LOG_ERROR("[WebSocket fd:%d] No SHA1 library available, aborting", fd_);
 #endif // CONFIG_IDF_TARGET

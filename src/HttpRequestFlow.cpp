@@ -509,7 +509,7 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
     string type = req_.header(HttpHeader::CONTENT_TYPE);
     if (type.find('=') == string::npos)
     {
-      LOG_ERROR("[Httpd fd:%d] Unable to find multipart/form-data bounary "
+      LOG_ERROR("[Httpd fd:%d] Unable to find multipart/form-data boundary "
                 "marker, giving up:\n%s", fd_, req_.to_string().c_str());
       req_.set_status(HttpStatusCode::STATUS_BAD_REQUEST);
       return call_immediately(STATE(abort_request_with_response));

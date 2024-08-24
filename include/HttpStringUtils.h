@@ -50,21 +50,21 @@ using std::vector;
 using std::pair;
 using std::make_pair;
 
-/// Helper method to break a string into a pair<string, string> based on a delimeter.
+/// Helper method to break a string into a pair<string, string> based on a delimiter.
 ///
 /// @param str is the string to break.
-/// @param delim is the delimeter to break the string on.
+/// @param delimiter is the delimiter to break the string on.
 ///
 /// @return the pair of string objects.
 static inline pair<string, string> break_string(string &str,
-                                                const string& delim)
+                                                const string& delimiter)
 {
-  size_t pos = str.find_first_of(delim);
+  size_t pos = str.find_first_of(delimiter);
   if (pos == string::npos)
   {
     return make_pair(str, "");
   }
-  size_t end_pos = pos + delim.length();
+  size_t end_pos = pos + delimiter.length();
   if (end_pos > str.length())
   {
     end_pos = pos;
@@ -73,18 +73,18 @@ static inline pair<string, string> break_string(string &str,
 }
 
 /// Helper which will break a string into multiple pieces based on a provided
-/// delimeter.
+/// delimiter.
 ///
 /// @param str is the string to tokenize.
 /// @param tokens is the container which will receive the tokenized strings.
-/// @param delimeter to tokenize the string on.
+/// @param delimiter to tokenize the string on.
 /// @param keep_incomplete will take the last token of the input string and
 /// insert it to the container as the last element when this is true. When
 /// this is false the last token will not be inserted to the container.
 /// @param discard_empty will discard empty tokens when set to true.
 template <class ContainerT>
 string::size_type tokenize(const string& str, ContainerT& tokens,
-                           const string& delimeter = " ",
+                           const string& delimiter = " ",
                            bool keep_incomplete = true,
                            bool discard_empty = false)
 {
@@ -95,7 +95,7 @@ string::size_type tokenize(const string& str, ContainerT& tokens,
 
   while(lastPos < str.length())
   {
-    pos = str.find_first_of(delimeter, lastPos);
+    pos = str.find_first_of(delimiter, lastPos);
     if (pos == std::string::npos)
     {
       if (!keep_incomplete)
@@ -115,20 +115,20 @@ string::size_type tokenize(const string& str, ContainerT& tokens,
   return lastPos;
 }
 
-/// Helper which joins a vector<string> with a delimeter.
+/// Helper which joins a vector<string> with a delimiter.
 ///
 /// @param strings is the vector<string> to join
-/// @param delimeter is the string to join the segments with.
+/// @param delimiter is the string to join the segments with.
 /// @return the joined string.
 static inline string string_join(const vector<string>& strings,
-                                 const string& delimeter = "")
+                                 const string& delimiter = "")
 {
   string result;
   for (auto piece : strings)
   {
     if (!result.empty())
     {
-      result += delimeter;
+      result += delimiter;
     }
     result += piece;
   }
@@ -139,14 +139,14 @@ static inline string string_join(const vector<string>& strings,
 ///
 /// @param first is the starting iterator position.
 /// @param last is the starting iterator position.
-/// @param delimeter is the string to join the segments with.
+/// @param delimiter is the string to join the segments with.
 /// @return the joined string.
 static inline string string_join(const vector<string>::iterator first,
                                  const vector<string>::iterator last,
-                                 const string& delimeter = "")
+                                 const string& delimiter = "")
 {
   vector<string> vec(first, last);
-  return string_join(vec, delimeter);
+  return string_join(vec, delimiter);
 }
 
 /// Helper which URL decodes a string as described in RFC-1738 sec. 2.2.
@@ -192,7 +192,7 @@ static inline string url_decode(const string source)
 ///
 /// NOTE: this method does not take into account the encoding of a URI with
 /// query parameters after the "?". This should be handled by the caller by
-/// passing the path and query portions seperately at this time.
+/// passing the path and query portions separately at this time.
 /// RFC: https://www.ietf.org/rfc/rfc1738.txt
 static inline string url_encode(const string source)
 {
