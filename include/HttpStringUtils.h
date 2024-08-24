@@ -110,7 +110,7 @@ string::size_type tokenize(const string& str, ContainerT& tokens,
       tokens.emplace_back(value_type(str.data() + lastPos,
                                     (size_type)pos - lastPos));
     }
-    lastPos = pos + delimeter.length();
+    lastPos = pos + delimiter.length();
   }
   return lastPos;
 }
