@@ -1371,6 +1371,11 @@ private:
   /// When true the frame data is XOR masked with a 32bit XOR mask.
   bool masked_;
 
+  /// When true the frame data is compressed using deflate.
+  ///
+  /// REF: RFC7692 section 9.2
+  bool compressed_;
+
   /// internal flag indicating the frame length type.
   uint8_t frameLenType_;
 

@@ -273,6 +273,7 @@ StateFlowBase::Action WebSocketFlow::frame_header_received()
 {
   opcode_ = static_cast<WebSocketOpcode>(header_ & 0x0F);
   masked_ = ((header_ >> 8) & WEBSOCKET_FRAME_IS_MASKED);
+  compressed_ = ((header_ >> 8) & WEBSOCKET_COMPRESSED_FRAME);
   uint8_t len = ((header_ >> 8) & 0x7F);
   LOG(CONFIG_HTTP_WS_LOG_LEVEL,
       "[WebSocket fd:%d] opc: %d, masked: %d, len: %d", fd_, opcode_, masked_,
