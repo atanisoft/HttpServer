@@ -1,3 +1,12 @@
+###############################################################################
+#
+# HttpServer
+#
+# SPDX-FileCopyrightText: 2019 Mike Dunston (atanisoft)
+# SPDX-License-Identifier: BSD-2-Clause
+#
+###############################################################################
+
 #
 # Log level constants from from components/OpenMRNLite/src/utils/logging.h
 #
