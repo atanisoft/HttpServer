@@ -1,35 +1,7 @@
-/** \copyright
- * Copyright (c) 2019-2021, Mike Dunston
- * All rights reserved.
+/*
+ * SPDX-FileCopyrightText: 2019 Mike Dunston (atanisoft)
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are  permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- *  - Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * \file HttpRequestFlow.cpp
- *
- * Implementation of the HttpRequestFlow StateFlow.
- *
- * @author Mike Dunston
- * @date 13 Sept 2019
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include "Httpd.h"
@@ -200,9 +172,7 @@ StateFlowBase::Action HttpRequestFlow::parse_header_data()
                         [&](const string &ent) {return !ent.compare(req_.uri());})
             != captive_portal_uris.end() && remote_ip_)
         {
-          if (!server_->captive_auth_.count(remote_ip_) ||
-              (server_->captive_auth_[remote_ip_] > server_->captive_timeout_ &&
-              server_->captive_timeout_ != UINT32_MAX))
+          if (server_->is_captive_auth_required(remote_ip_))
           {
             // new client or authentication expired
             res_ = server_->captive_response_;
@@ -232,8 +202,7 @@ StateFlowBase::Action HttpRequestFlow::parse_header_data()
         else if (server_->captive_active_ &&
                 !server_->captive_auth_uri_.compare(req_.uri()))
         {
-          server_->captive_auth_[remote_ip_] =
-            os_get_time_monotonic() + server_->captive_timeout_;
+          server_->refresh_captive_auth_timeout(remote_ip_);
           res_ = server_->captive_ok_;
         }
         else
@@ -512,7 +481,7 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
     string type = req_.header(HttpHeader::CONTENT_TYPE);
     if (type.find('=') == string::npos)
     {
-      LOG_ERROR("[Httpd fd:%d] Unable to find multipart/form-data bounary "
+      LOG_ERROR("[Httpd fd:%d] Unable to find multipart/form-data boundary "
                 "marker, giving up:\n%s", fd_, req_.to_string().c_str());
       req_.set_status(HttpStatusCode::STATUS_BAD_REQUEST);
       return call_immediately(STATE(abort_request_with_response));

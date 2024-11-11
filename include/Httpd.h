@@ -1,35 +1,7 @@
-/** \copyright
- * Copyright (c) 2019-2021, Mike Dunston
- * All rights reserved.
+/*
+ * SPDX-FileCopyrightText: 2019 Mike Dunston (atanisoft)
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are  permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- *  - Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * \file Httpd.h
- *
- * Main include file for all HttpServer declarations.
- *
- * @author Mike Dunston
- * @date 13 Sept 2019
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 /// @file HTTP server with Captive Portal support.
@@ -95,7 +67,7 @@ DECLARE_CONST(httpd_max_header_size);
 /// ignoring new ones. Default is 20.
 DECLARE_CONST(httpd_max_header_count);
 
-/// This controls how many request parameters will be allowed before ignroing
+/// This controls how many request parameters will be allowed before ignoring
 /// new ones. Default is 20.
 DECLARE_CONST(httpd_max_param_count);
 
@@ -375,7 +347,7 @@ public:
   /// is owned by the @ref AbstractHttpResponse and does not
   /// need to be freed by the caller.
   ///
-  /// Note: this method should be overriden by sub-classes to supply the
+  /// Note: this method should be overridden by sub-classes to supply the
   /// response body.
   virtual const uint8_t *get_body()
   {
@@ -384,7 +356,7 @@ public:
 
   /// @return the size of the body payload.
   ///
-  /// Note: this method should be overriden by sub-classes to supply the
+  /// Note: this method should be overridden by sub-classes to supply the
   /// response body.
   virtual size_t get_body_length()
   {
@@ -393,7 +365,7 @@ public:
 
   /// @return the mime type to include in the HTTP response header.
   ///
-  /// Note: this method should be overriden by sub-classes to supply the
+  /// Note: this method should be overridden by sub-classes to supply the
   /// response body.
   std::string get_body_mime_type()
   {
@@ -530,7 +502,7 @@ public:
   /// @param code is the @ref HttpStatuCode to use for this response.
   ///
   /// Note: The ownership of the response object passed into this method will
-  /// be transfered to this class instance and will be cleaned up after it has
+  /// be transferred to this class instance and will be cleaned up after it has
   /// been sent to the client.
   StringResponse(const std::string &response, const std::string &mime_type,
                  const HttpStatusCode code = HttpStatusCode::STATUS_OK);
@@ -566,7 +538,7 @@ public:
   /// @ref MIME_TYPE_APPLICATION_JSON as mime_type.
   ///
   /// Note: The ownership of the response object passed into this method will
-  /// be transfered to this class instance and will be cleaned up after it has
+  /// be transferred to this class instance and will be cleaned up after it has
   /// been sent to the client.
   JsonResponse(const std::string &response,
                const HttpStatusCode code = HttpStatusCode::STATUS_OK)
@@ -965,7 +937,7 @@ public:
   /// Starts the HTTP and DNS listeners.
   ///
   /// @param dns_ip_address IP address to respond with to all DNS queries,
-  /// default value is INADDR_ANY (disabled). Ths will only be used if there
+  /// default value is INADDR_ANY (disabled). This will only be used when there
   /// is a configured captive portal.
   ///
   /// NOTE: On the ESP32 when passing in an Esp32WiFiManager instance it is not
@@ -977,6 +949,14 @@ public:
   /// NOTE: On the ESP32 when passing in an Esp32WiFiManager instance it is not
   /// necessary to call this method.
   void stop_server();
+
+  /// Allows checking if there are any websocket connections present on the
+  /// server. This is useful for avoiding computationally expensive formatting
+  /// of data for websockets when there are no consumers.
+  ///
+  /// @return true if there is at least one websocket connected to the server,
+  /// false otherwise.
+  bool has_websocket_connections();
 
 private:
   /// Gives @ref WebSocketFlow access to protected/private members.
@@ -1052,6 +1032,13 @@ private:
   /// @return true if the @param request can be serviced by this @ref Httpd.
   bool is_servicable_uri(HttpRequest *request);
 
+  /// @return true if the @param remote_ip should be redirected to captive
+  /// portal authentication page.
+  bool is_captive_auth_required(const uint32_t remote_ip);
+
+  /// Refreshes the captive authentication timeout.
+  void refresh_captive_auth_timeout(const uint32_t remote_ip);
+
   /// Name to use for the @ref Httpd server.
   const std::string name_;
 
@@ -1096,7 +1083,7 @@ private:
   /// the current version.
   std::map<std::string, std::shared_ptr<AbstractHttpResponse>> static_uris_;
 
-  /// Internal map of all registeres static URIs to use when resource has not
+  /// Internal map of all registered static URIs to use when resource has not
   /// been modified since the client last retrieved it.
   std::map<std::string, std::shared_ptr<AbstractHttpResponse>> static_cached_;
 
@@ -1355,6 +1342,11 @@ private:
 
   /// When true the frame data is XOR masked with a 32bit XOR mask.
   bool masked_;
+
+  /// When true the frame data is compressed using deflate.
+  ///
+  /// REF: RFC7692 section 9.2
+  bool compressed_;
 
   /// internal flag indicating the frame length type.
   uint8_t frameLenType_;

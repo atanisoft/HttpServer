@@ -1,35 +1,7 @@
-/** \copyright
- * Copyright (c) 2019-2021, Mike Dunston
- * All rights reserved.
+/*
+ * SPDX-FileCopyrightText: 2019 Mike Dunston (atanisoft)
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are  permitted provided that the following conditions are met:
- *
- *  - Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- *  - Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- * \file HttpServer.cpp
- *
- * Implementation of the HTTP server.
- *
- * @author Mike Dunston
- * @date 13 Sept 2019
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include "Httpd.h"
@@ -233,7 +205,7 @@ void Httpd::new_connection(int fd)
                sizeof(struct timeval)));
 
   // Reconfigure the socket for non-blocking operations
-  ::fcntl(fd, F_SETFL, O_RDWR | O_NONBLOCK);
+  ::fcntl(fd, F_SETFL, ::fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
 
   // Start the HTTP processing flow or close the socket if we fail to allocate
   // the request handler.
@@ -284,6 +256,12 @@ void Httpd::stop_server()
 {
   stop_http_listener();
   stop_dns_listener();
+}
+
+bool Httpd::has_websocket_connections()
+{
+  const std::lock_guard<std::mutex> lock(websocketsLock_);
+  return websockets_.size();
 }
 
 void Httpd::init_server()
@@ -462,6 +440,26 @@ bool Httpd::is_servicable_uri(HttpRequest *req)
   LOG(CONFIG_HTTP_SERVER_LOG_LEVEL, "[Httpd uri:%s] method: %s, proc: %d"
     , req->raw_method().c_str(), req->uri().c_str(), processor != nullptr);
   return processor != nullptr;
+}
+
+bool Httpd::is_captive_auth_required(const uint32_t remote_ip)
+{
+  if (captive_timeout_ == UINT32_MAX ||
+      captive_auth_[remote_ip] < captive_timeout_)
+  {
+    return false;
+  }
+
+  return true;
+}
+
+void Httpd::refresh_captive_auth_timeout(const uint32_t remote_ip)
+{
+  if (captive_timeout_ == UINT32_MAX)
+  {
+    return;
+  }
+  captive_auth_[remote_ip] = os_get_time_monotonic() + captive_timeout_;
 }
 
 RequestProcessor Httpd::handler(HttpMethod method, const std::string &uri)
