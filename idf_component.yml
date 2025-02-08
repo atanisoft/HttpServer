@@ -10,6 +10,6 @@ dependencies:
   OpenMRNIDF:
     git: https://github.com/atanisoft/OpenMRNIDF.git
   espressif/mdns:
-    version: "^1.0"
+    version: "*"
     rules:
-      if: "idf_version >=5.0"
+      - if: "target != linux"
