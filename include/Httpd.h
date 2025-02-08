@@ -30,12 +30,17 @@
 
 #include "Dnsd.h"
 
-#ifdef CONFIG_IDF_TARGET
+#ifdef ESP_PLATFORM
+#include "sdkconfig.h"
+
+#if !CONFIG_IDF_TARGET_LINUX
 namespace openmrn_arduino
 {
   class Esp32WiFiManager;
 }
 #endif
+
+#endif // ESP_PLATFORM
 
 /// Namespace for HTTP related functionality.
 namespace http
@@ -174,22 +179,22 @@ enum HttpStatusCode
 static constexpr uint16_t DEFAULT_HTTP_PORT = 80;
 
 /// Commonly used and well-known HTTP methods.
-enum HttpMethod
+enum HttpMethod : uint8_t
 {
   /// Request is for deleting a resource.
-  DELETE          = BIT(1),
+  DELETE          = 0x01,
   /// Request is for retrieving a resource.
-  GET             = BIT(2),
+  GET             = 0x02,
   /// Request is for retrieving the headers for a resource. 
-  HEAD            = BIT(3),
+  HEAD            = 0x04,
   /// Request is for creating a resource.
-  POST            = BIT(4),
+  POST            = 0x08,
   /// Request is for patching an existing resource.
-  PATCH           = BIT(5),
+  PATCH           = 0x10,
   /// Request is for applying an update to an existing resource.
-  PUT             = BIT(6),
+  PUT             = 0x20,
   /// Request type was not understood by the server.
-  UNKNOWN_METHOD  = BIT(7),
+  UNKNOWN_METHOD  = 0x80,
 };
 
 /// Commonly used and well-known HTTP headers
@@ -797,7 +802,7 @@ public:
         uint16_t port = DEFAULT_HTTP_PORT, const std::string &name = "httpd",
         const std::string service_name = "_http._tcp");
 
-#ifdef CONFIG_IDF_TARGET
+#if defined(ESP_PLATFORM) && !CONFIG_IDF_TARGET_LINUX
   /// Constructor.
   ///
   /// @param wifi is the @ref Esp32WiFiManager that manages the WiFi system.
@@ -810,7 +815,7 @@ public:
   Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns = nullptr,
         uint16_t port = DEFAULT_HTTP_PORT, const std::string &name = "httpd",
         const std::string service_name = "_http._tcp");
-#endif // CONFIG_IDF_TARGET
+#endif // ESP_PLATFORM && !CONFIG_IDF_TARGET_LINUX
 
   /// Destructor.
   ~Httpd();
