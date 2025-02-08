@@ -7,7 +7,6 @@ targets:
 
 dependencies:
   idf: ">=5.0"
-  OpenMRNIDF: "*"
   espressif/mdns:
     version: "*"
     rules:
