@@ -7,8 +7,7 @@ targets:
 
 dependencies:
   idf: ">=5.0"
-  OpenMRNIDF:
-    git: https://github.com/atanisoft/OpenMRNIDF.git
+  OpenMRNIDF: "*"
   espressif/mdns:
     version: "*"
     rules:
