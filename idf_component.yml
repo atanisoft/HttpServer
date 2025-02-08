@@ -3,8 +3,13 @@ targets:
   - esp32s2
   - esp32s3
   - esp32c3
+  - linux
 
 dependencies:
   idf: ">=5.0"
+  OpenMRNIDF:
+    git: https://github.com/atanisoft/OpenMRNIDF.git
   espressif/mdns:
     version: "^1.0"
+    rules:
+      if: "idf_version >=5.0"

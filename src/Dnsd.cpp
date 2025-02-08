@@ -12,6 +12,10 @@
 #include <utils/format_utils.hxx>
 #include <utils/logging.h>
 
+#if CONFIG_IDF_TARGET_LINUX
+#include <arpa/inet.h>
+#endif
+
 #ifndef CONFIG_HTTP_DNS_LOG_LEVEL
 #define CONFIG_HTTP_DNS_LOG_LEVEL VERBOSE
 #endif
@@ -120,7 +124,7 @@ void Dnsd::dns_process_thread()
       {
         if ((len + sizeof(DNSResponse)) > config_dnsd_buffer_size())
         {
-          LOG_ERROR("[%s] Buffer overrun (req:%d, resp:%d, buf:%d), dropping "
+          LOG_ERROR("[%s] Buffer overrun (req:%d, resp:%zu, buf:%d), dropping "
                     "request!", name_.c_str(), len, len + sizeof(DNSResponse),
                     config_dnsd_buffer_size());
           continue;
@@ -148,7 +152,7 @@ void Dnsd::dns_process_thread()
         ERRNOCHECK("sendto", sendto(fd, buffer_.data(),
                                     len + sizeof(DNSResponse), DNS_SENDTO_FLAGS,
                                     (const sockaddr*)&source,
-                                    sizeof(sockaddr_in)));
+                                    sizeof(struct sockaddr_in)));
       }
     }
     else

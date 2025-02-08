@@ -535,7 +535,7 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
       parsed, body_len_);
 
   // process any remaining lines as headers until we reach a blank line
-  int processed_lines = 0;
+  size_t processed_lines = 0;
   for (auto &line : lines)
   {
     processed_lines++;
@@ -578,21 +578,21 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
       if (found_part_boundary_)
       {
         LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-            "[Httpd fd:%d,uri:%s] End of multipart/form-data segment(%d)", fd_,
+            "[Httpd fd:%d,uri:%s] End of multipart/form-data segment(%zu)", fd_,
             req_.uri().c_str(), part_count_);
         found_part_boundary_ = false;
         if (line.find_last_of("--") == line.length() - 2)
         {
-          LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL
-            , "[Httpd fd:%d,uri:%s] End of last segment reached"
-            , fd_, req_.uri().c_str());
+          LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
+              "[Httpd fd:%d,uri:%s] End of last segment reached",
+              fd_, req_.uri().c_str());
           return yield_and_call(STATE(send_response_headers));
         }
       }
       else
       {
         LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-            "[Httpd fd:%d,uri:%s] Start of multipart/form-data segment(%d)",
+            "[Httpd fd:%d,uri:%s] Start of multipart/form-data segment(%zu)",
             fd_, req_.uri().c_str(), part_count_);
         found_part_boundary_ = true;
         // reset part specific data
@@ -611,7 +611,7 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
       {
         part_type_.assign(parts.second);
         LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-            "[Httpd fd:%d,uri:%s] multipart/form-data segment(%d) uses %s:%s",
+            "[Httpd fd:%d,uri:%s] multipart/form-data segment(%zu) uses %s:%s",
             fd_, req_.uri().c_str(), part_count_,
             well_known_http_headers[HttpHeader::CONTENT_TYPE],
             part_type_.c_str());
@@ -630,7 +630,7 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
             tokenize(part, file_parts, "\"");
             part_filename_.assign(file_parts[1]);
             LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-                "[Httpd fd:%d,uri:%s] multipart/form-data segment(%d) "
+                "[Httpd fd:%d,uri:%s] multipart/form-data segment(%zu) "
                 "filename detected as '%s'", fd_, req_.uri().c_str(),
                 part_count_, part_filename_.c_str());
           }
@@ -645,7 +645,7 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
           else
           {
             LOG_ERROR(
-              "[Httpd fd:%d,uri:%s] Unrecognized field in segment(%d): %s",
+              "[Httpd fd:%d,uri:%s] Unrecognized field in segment(%zu): %s",
               fd_, req_.uri().c_str(), part_count_, part.c_str());
           }
         }
@@ -668,7 +668,7 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
       buf_.clear();
       std::move(raw_header_.begin(), raw_header_.end(), std::back_inserter(buf_));
       LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-          "[Httpd fd:%d,uri:%s] segment(%d) size %zu/%zu",
+          "[Httpd fd:%d,uri:%s] segment(%zu) size %zu/%zu",
           fd_, req_.uri().c_str(), part_count_, buf_.size(), body_len_);
       body_len_ += buf_.size();
       raw_header_.assign("");
@@ -679,12 +679,12 @@ StateFlowBase::Action HttpRequestFlow::parse_multipart_headers()
     // we will return to this state to get the next part.
     part_len_ = body_len_ - (part_boundary_.size() + 4);
     LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-        "[Httpd fd:%d,uri:%s] segment(%d) size %zu/%zu",
+        "[Httpd fd:%d,uri:%s] segment(%zu) size %zu/%zu",
         fd_, req_.uri().c_str(), part_count_, part_len_, body_len_);
     size_t data_req = std::min(part_len_, body_read_size_ - buf_.size());
     
     LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-        "[Httpd fd:%d,uri:%s] Requesting %zu/%zu bytes for segment(%d)",
+        "[Httpd fd:%d,uri:%s] Requesting %zu/%zu bytes for segment(%zu)",
         fd_, req_.uri().c_str(), data_req, part_len_, part_count_);
     // read the payload and process it in chunks
     return read_repeated_with_timeout(&helper_, timeout_, fd_
@@ -876,7 +876,7 @@ StateFlowBase::Action HttpRequestFlow::send_response_body()
   else if (res_->get_body_length())
   {
     LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-        "[Httpd fd:%d,uri:%s] Sending body of %d bytes.", fd_,
+        "[Httpd fd:%d,uri:%s] Sending body of %zu bytes.", fd_,
         req_.uri().c_str(), res_->get_body_length());
     // check if we can send the entire response in one call or not.
     if (res_->get_body_length() > config_httpd_response_chunk_size())
@@ -886,7 +886,7 @@ StateFlowBase::Action HttpRequestFlow::send_response_body()
           req_.uri().c_str());
       response_body_offs_ = 0;
       LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-          "[Httpd fd:%d,uri:%s] Sending [%d-%d/%d]", fd_,
+          "[Httpd fd:%d,uri:%s] Sending [%zu-%u/%zu]", fd_,
           req_.uri().c_str(), response_body_offs_,
           config_httpd_response_chunk_size(), res_->get_body_length());
       return write_repeated(&helper_, fd_, res_->get_body()
@@ -919,7 +919,7 @@ StateFlowBase::Action HttpRequestFlow::send_response_body_split()
     remaining = config_httpd_response_chunk_size();
   }
   LOG(CONFIG_HTTP_REQ_FLOW_LOG_LEVEL,
-      "[Httpd fd:%d,uri:%s] Sending [%d-%d/%d]", fd_, req_.uri().c_str(),
+      "[Httpd fd:%d,uri:%s] Sending [%zu-%zu/%zu]", fd_, req_.uri().c_str(),
       response_body_offs_, response_body_offs_ + remaining,
       res_->get_body_length());
   return write_repeated(&helper_, fd_, res_->get_body() + response_body_offs_

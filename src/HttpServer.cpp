@@ -16,13 +16,14 @@
 #define CONFIG_HTTP_SERVER_LOG_LEVEL VERBOSE
 #endif
 
-#ifdef CONFIG_IDF_TARGET
+
+#if defined(ESP_PLATFORM) && !CONFIG_IDF_TARGET_LINUX
 
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
 
 #include <esp_system.h>
 
-#endif // CONFIG_IDF_TARGET
+#endif // ESP_PLATFORM && !CONFIG_IDF_TARGET_LINUX
 
 namespace http
 {
@@ -55,7 +56,7 @@ Httpd::Httpd(ExecutorBase *executor, MDNS *mdns, uint16_t port,
   init_server();
 }
 
-#ifdef CONFIG_IDF_TARGET
+#if defined(ESP_PLATFORM) && !CONFIG_IDF_TARGET_LINUX
 
 Httpd::Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns,
              uint16_t port, const string &name, const string service_name)
@@ -82,7 +83,7 @@ Httpd::Httpd(openmrn_arduino::Esp32WiFiManager *wifi, MDNS *mdns,
       stop_server();
     });
 }
-#endif // CONFIG_IDF_TARGET
+#endif // ESP_PLATFORM && !CONFIG_IDF_TARGET_LINUX
 
 Httpd::~Httpd()
 {
